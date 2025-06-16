@@ -1,0 +1,47 @@
+Plans.txt
+
+I want to create a *core SQL* compliant parser
+
+2 main areas:
+1. Table: emulate how SQL tables work
+2. Parser: Get SQL input and be able to translate it into c++ code to be executed
+
+Table:
+
+Areas that need to be built:
+
+1: Data types. (SEPARATE CPP FILE)
+These are the bread and butter of SQL
+Luckily, many of them can be emulated using optional<>
+
+Data types to include:
+1. INTEGER
+2. SMALLINT 
+3. BIGINT
+4. FLOAT
+5. REAL
+6. DOUBLE
+7. DECIMAL
+8. NUMERIC
+16. BOOL
+
+(will need basic custom types)
+9. CHAR
+10. VARCHAR
+11. TEXT
+
+(will need more complicated custom types)
+12. DATE
+13. TIME
+14. DATETIME
+15. TIMESTAMP
+
+
+
+We also need to consider teh datatypes inherent to the table itself:
+
+using Row = unordered_map<string, variant<Types>>;
+using Column = vector<variant<Types>>;
+
+monostate null = monostate{};
+
