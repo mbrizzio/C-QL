@@ -7,7 +7,11 @@ public:
 
     void insertColumn(const string name, const string dataType);
     void insertRow(Row row);
+    
+    // Overload for char/varchar
+    void insertColumn(const string name, const string dataType, const int length);
     int getCharTypeLength(const string name) const;
+    
     void print();
 
 private:
@@ -17,7 +21,8 @@ private:
     vector<int> order;
 
     vector<string> supportedDatatypes = {
-        "INTEGER", "SMALLINT", "BIGINT", "FLOAT", "TEXT", "NULL"
+        "INTEGER", "SMALLINT", "BIGINT", "FLOAT", 
+        "TEXT", "CHAR", "VARCHAR","NULL"
     };
 
     int numRows = 0;

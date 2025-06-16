@@ -1,12 +1,11 @@
+#pragma once
 #include "datatypes.h"
 #include "table.h"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <iostream>
 
 using namespace std;
-
 
 // Public
 
@@ -28,12 +27,28 @@ void Table::insertColumn(const string name, const string dataType){
   }
 }
 
+// Add a new char/varchar column to the table
+void Table::insertColumn(const string name, const string dataType, const int length){    
+  assert(dataType == "CHAR" || dataType == "VARCHAR");
+
+  columns[name] = {};
+  columnNames.push_back(name);
+  charTypeColumnLengths[name] = length;
+
+  ++numCols;
+
+  // Populate the column with nulls for the number of rows in table
+  for (int i = 0; i < numRows; ++i){
+    columns[name].push_back(null);
+  }
+}
+
 // Add a new row to the table
 // Skips incorrectly names/non-existent columns
 // Columns not specified get initialized as NULL
 void Table::insertRow(Row row){
   for (string column : columnNames){
-    if (row.find(column) == row.end()) row[column] = null;;
+    if (row.find(column) == row.end()) row[column] = null;
 
     columns[column].push_back(row[column]);
   }
@@ -68,7 +83,7 @@ void Table::print() {
   cout << "\n";
 
   // Separator
-  string separator(totalSize*1.5, '-'); // Why is - not monospace...
+  string separator(totalSize, '='); // Why is - not monospace...
   cout << separator << "\n";
 
   // Rows, in order
@@ -84,6 +99,8 @@ void Table::print() {
       // Extract the value from the cell
       if (holds_alternative<monostate>(value)) toPrint = "NULL";
       else if (holds_alternative<string>(value)) toPrint = get<string>(value);
+      else if (holds_alternative<SQLChar>(value)) toPrint = get<SQLChar>(value).getValue();
+      else if (holds_alternative<Varchar>(value)) toPrint = get<Varchar>(value).getValue();
       else if (holds_alternative<float>(value)){
         ostringstream out;
         out << fixed << setprecision(4) << get<float>(value);
@@ -155,22 +172,3 @@ void Table::tableValidityCheck() {
 
 }
 
-
-
-int main(){
-  Table table;
-
-  table.insertColumn("test", "INTEGER");
-  table.insertColumn("Name", "TEXT");
-  Row toAdd;
-  toAdd["test"] = 1;
-
-  table.insertRow(toAdd);
-
-  Row toAdd2;
-  toAdd2["Name"] = "hehehe";
-
-  table.insertRow(toAdd2);
-
-  table.print();
-}
