@@ -8,6 +8,9 @@
 #include <compare>
 
 using namespace std;
+
+using nullableString = std::variant<std::string, std::monostate>;
+
 constexpr monostate Null{};
 
 class Table;
@@ -17,24 +20,25 @@ class Varchar{
     // Constructors
     Varchar();
     Varchar(int Length);
-    Varchar(int Length, std::variant<std::string, std::monostate> Value);
+    Varchar(int Length, nullableString Value);
 
     Varchar(Table* table, std::string name);
-    Varchar(Table* table, std::string name, std::variant<std::string, std::monostate> Value);
+    Varchar(Table* table, std::string name, nullableString Value);
 
     string getValue();
 
     int length;
-    std::variant<std::string, std::monostate> value;
+    nullableString value;
 
     // Helper function to check for null values
-    bool inline containsNull
-    (const std::variant<std::string, std::monostate> &lhs, const Varchar &rhs){
-      if (holds_alternative<monostate>(lhs) || holds_alternative<monostate>(rhs.value)){
-        return true;
+    template <typename Comparator>
+    bool inline comparatorHelper
+    (const nullableString &lhs, const nullableString &rhs, const Comparator comp){
+      if (holds_alternative<monostate>(lhs) || holds_alternative<monostate>(rhs)){
+        return false;
       }
 
-      return false;
+      return comp(get<string>(lhs), get<string>(rhs));
     }
 
     bool operator==(const Varchar &rhs);
@@ -70,7 +74,7 @@ using Types = variant<
   float,      //FLOAT
   string,     //TEXT
   Varchar,    //VARCHAR
-  SQLChar,       //CHAR
+  SQLChar,    //CHAR
   monostate   //NULL
 >;
 

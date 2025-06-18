@@ -85,48 +85,25 @@ void SQLChar::enforceLengthInvariant(){
 
 // Comparator hell
 bool Varchar::operator==(const Varchar &rhs){
-  if (containsNull(value, rhs)){
-    return false;
-  }
-
-  return get<string>(value) == get<string>(rhs.value);
+  return comparatorHelper(value, rhs.value, std::equal_to<>{});
 }
 
 bool Varchar::operator!=(const Varchar &rhs){
-  if (containsNull(value, rhs)){
-      return false;
-    }
-
-  return get<string>(value) != get<string>(rhs.value);
+  return comparatorHelper(value, rhs.value, std::not_equal_to<>{});
 }
 
 bool Varchar::operator<(const Varchar &rhs){
-  if (containsNull(value, rhs)){
-    return false;
-  }
-
-  return get<string>(value) < get<string>(rhs.value);
+  return comparatorHelper(value, rhs.value, std::less<>{});
 }
-bool Varchar::operator>(const Varchar &rhs){
-  if (containsNull(value, rhs)){
-    return false;
-  }
 
-  return get<string>(value) > get<string>(rhs.value);
+bool Varchar::operator>(const Varchar &rhs){
+  return comparatorHelper(value, rhs.value, std::greater<>{});
 }
 
 bool Varchar::operator<=(const Varchar &rhs){
-  if (containsNull(value, rhs)){
-    return false;
-  }
-
-  return get<string>(value) <= get<string>(rhs.value);
+  return comparatorHelper(value, rhs.value, std::less_equal<>{});
 }
 
 bool Varchar::operator>=(const Varchar &rhs){
-  if (containsNull(value, rhs)){
-    return false;
-  }
-
-  return get<string>(value) >= get<string>(rhs.value);
+  return comparatorHelper(value, rhs.value, std::greater_equal<>{});
 }
