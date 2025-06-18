@@ -23,7 +23,7 @@ void Table::insertColumn(const string name, const string dataType){
 
   // Populate the column with nulls for the number of rows in table
   for (int i = 0; i < numRows; ++i){
-    columns[name].push_back(null);
+    columns[name].push_back(Null);
   }
 }
 
@@ -39,7 +39,7 @@ void Table::insertColumn(const string name, const string dataType, const int len
 
   // Populate the column with nulls for the number of rows in table
   for (int i = 0; i < numRows; ++i){
-    columns[name].push_back(null);
+    columns[name].push_back(Null);
   }
 }
 
@@ -48,7 +48,7 @@ void Table::insertColumn(const string name, const string dataType, const int len
 // Columns not specified get initialized as NULL
 void Table::insertRow(Row row){
   for (string column : columnNames){
-    if (row.find(column) == row.end()) row[column] = null;
+    if (row.find(column) == row.end()) row[column] = Null;
 
     columns[column].push_back(row[column]);
   }

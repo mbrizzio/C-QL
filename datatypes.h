@@ -7,13 +7,13 @@
 #include <iostream>
 
 using namespace std;
-
-extern monostate null;
+constexpr monostate Null{};
 
 class Table;
 
 class Varchar{
   public:
+    // Constructors
     Varchar();
     Varchar(int Length);
     Varchar(int Length, std::variant<std::string, std::monostate> Value);

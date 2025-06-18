@@ -2,15 +2,14 @@
 #include "datatypes.h"
 #include "table.h"
 
-monostate null = monostate{};
 
 Varchar::Varchar() {
   length = 100;
-  value = null;
+  value = Null;
 }
 
 Varchar::Varchar(int Length) : length(Length) {
-  value = null;
+  value = Null;
 
   enforceLengthInvariant();
 };
@@ -22,7 +21,7 @@ Varchar::Varchar(int Length, variant<string, monostate> Value) : length(Length),
 
 Varchar::Varchar(Table* table, std::string name) {
   length = table->getCharTypeLength(name);
-  value = null; 
+  value = Null; 
 
   enforceLengthInvariant();
 }
