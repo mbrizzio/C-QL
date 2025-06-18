@@ -31,6 +31,6 @@ private:
     // Validity helpers
     bool validDatatype(const string datatype) const;
     bool columnNameExists(const string name) const;
-    void columnNameValidityCheck();  // stub for future
+    void columnNameValidityCheck();  
     void tableValidityCheck();
 };

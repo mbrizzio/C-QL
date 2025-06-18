@@ -154,7 +154,17 @@ bool Table::columnNameExists(string const name) const {
 // TODO: two way check: all columns in table are in columnNames,
 // all columnNames columns exist
 void Table::columnNameValidityCheck(){
-  
+  for (string name : columnNames){
+    if (columns.find(name) == columns.end()){
+      cerr << "Column " << name << " found in columnNames but not in columns" << endl;
+      exit(1);
+    }
+  }
+
+  if (columnNames.size() != columns.size()){
+    cerr << "mismatch between the number of elements in columns and columnNames" << endl;
+    exit(1);
+  }
 }
     
 void Table::tableValidityCheck() {
