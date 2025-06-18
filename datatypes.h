@@ -5,6 +5,7 @@
 #include <cassert>
 #include <string>
 #include <iostream>
+#include <compare>
 
 using namespace std;
 constexpr monostate Null{};
@@ -25,6 +26,23 @@ class Varchar{
 
     int length;
     std::variant<std::string, std::monostate> value;
+
+    // Helper function to check for null values
+    bool inline containsNull
+    (const std::variant<std::string, std::monostate> &lhs, const Varchar &rhs){
+      if (holds_alternative<monostate>(lhs) || holds_alternative<monostate>(rhs.value)){
+        return true;
+      }
+
+      return false;
+    }
+
+    bool operator==(const Varchar &rhs);
+    bool operator!=(const Varchar &rhs);
+    bool operator<(const Varchar &rhs);
+    bool operator>(const Varchar &rhs);
+    bool operator<=(const Varchar &rhs);
+    bool operator>=(const Varchar &rhs);
 
   private:
     virtual void enforceLengthInvariant();

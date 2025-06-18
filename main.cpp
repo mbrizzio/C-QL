@@ -1,5 +1,6 @@
 #include "datatypes.h"
 #include "table.h"
+#include "testsuite.h"
 
 using namespace std;
 
@@ -36,4 +37,10 @@ int main(){
   table.insertRow(toAdd);
   
   table.print();
+
+  test_equality();
+  test_less_than();
+  test_less_than_equal();
+  test_greater_than();
+  test_greater_than_equal();
 }

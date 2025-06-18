@@ -81,3 +81,52 @@ void SQLChar::enforceLengthInvariant(){
     get<string>(value) += padding;
   }
 }
+
+
+// Comparator hell
+bool Varchar::operator==(const Varchar &rhs){
+  if (containsNull(value, rhs)){
+    return false;
+  }
+
+  return get<string>(value) == get<string>(rhs.value);
+}
+
+bool Varchar::operator!=(const Varchar &rhs){
+  if (containsNull(value, rhs)){
+      return false;
+    }
+
+  return get<string>(value) != get<string>(rhs.value);
+}
+
+bool Varchar::operator<(const Varchar &rhs){
+  if (containsNull(value, rhs)){
+    return false;
+  }
+
+  return get<string>(value) < get<string>(rhs.value);
+}
+bool Varchar::operator>(const Varchar &rhs){
+  if (containsNull(value, rhs)){
+    return false;
+  }
+
+  return get<string>(value) > get<string>(rhs.value);
+}
+
+bool Varchar::operator<=(const Varchar &rhs){
+  if (containsNull(value, rhs)){
+    return false;
+  }
+
+  return get<string>(value) <= get<string>(rhs.value);
+}
+
+bool Varchar::operator>=(const Varchar &rhs){
+  if (containsNull(value, rhs)){
+    return false;
+  }
+
+  return get<string>(value) >= get<string>(rhs.value);
+}
