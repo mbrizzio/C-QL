@@ -15,25 +15,28 @@ constexpr monostate Null{};
 
 class Table;
 
+// Should just remove NULL support from this class...
+// Or maybe keep it this way for now and see if it truly becomes a problem
+// Make subsequent classes that don't support NULL and test those
 class Varchar{
   public:
     // Constructors
     Varchar();
     Varchar(int Length);
-    Varchar(int Length, nullableString Value);
+    Varchar(int Length, string Value);
 
     Varchar(Table* table, std::string name);
-    Varchar(Table* table, std::string name, nullableString Value);
+    Varchar(Table* table, std::string name, string Value);
 
     string getValue();
 
+    string value;
     int length;
-    nullableString value;
-
+    
     // Helper function to check for null values
     template <typename Comparator>
     bool inline comparatorHelper
-    (const nullableString &lhs, const nullableString &rhs, const Comparator comp){
+    (const string &lhs, const nullableString &rhs, const Comparator comp){
       if (holds_alternative<monostate>(lhs) || holds_alternative<monostate>(rhs)){
         return false;
       }
@@ -58,10 +61,10 @@ class SQLChar : public Varchar {
 
     SQLChar();
     SQLChar(int Length);
-    SQLChar(int Length, variant<string, monostate> Value);
+    SQLChar(int Length, string Value);
 
     SQLChar(Table* table, std::string name);
-    SQLChar(Table* table, string name, variant<string, monostate> Value);
+    SQLChar(Table* table, string name, string Value);
 
   private:
     void enforceLengthInvariant() override;

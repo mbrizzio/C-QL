@@ -5,46 +5,42 @@
 
 Varchar::Varchar() {
   length = 100;
-  value = Null;
+  value = "";
 }
 
 Varchar::Varchar(int Length) : length(Length) {
-  value = Null;
+  value = "";
 
   enforceLengthInvariant();
 };
 
-Varchar::Varchar(int Length, variant<string, monostate> Value) : length(Length),
+Varchar::Varchar(int Length, string Value) : length(Length),
   value(Value) {
     enforceLengthInvariant();
   };
 
 Varchar::Varchar(Table* table, std::string name) {
   length = table->getCharTypeLength(name);
-  value = Null; 
+  value = ""; 
 
   enforceLengthInvariant();
 }
 
-Varchar::Varchar(Table* table, string name, variant<string, monostate> Value) : value(Value) {
+Varchar::Varchar(Table* table, string name, string Value) : value(Value) {
   length = table->getCharTypeLength(name);
 
   enforceLengthInvariant();
 }
 
 void Varchar::enforceLengthInvariant(){
-  if (holds_alternative<monostate>(value)) return;
-
-  if (get<string>(value).size() > length){
+  if (value.size() > length){
     cerr << "Length of VARCHAR exceeds the stipulated length" << endl;
     exit(3);
   }
 }
 
 string Varchar::getValue(){
-  if (holds_alternative<monostate>(value)) return "NULL";
-
-  return get<string>(value);
+  return value;
 }
 
 SQLChar::SQLChar() : Varchar() {};
@@ -53,7 +49,7 @@ SQLChar::SQLChar(int Length) : Varchar(Length) {
   enforceLengthInvariant();
 }
 
-SQLChar::SQLChar(int Length, variant<string, monostate> Value) : Varchar(Length, Value) {
+SQLChar::SQLChar(int Length, string Value) : Varchar(Length, Value) {
   enforceLengthInvariant();
 }
 
@@ -61,24 +57,22 @@ SQLChar::SQLChar(Table* table, std::string name) : Varchar(table, name){
   enforceLengthInvariant();
 }
 
-SQLChar::SQLChar(Table* table, string name, variant<string, monostate> Value) : 
+SQLChar::SQLChar(Table* table, string name, string Value) : 
 Varchar(table, name, Value) {
   enforceLengthInvariant();
 }
 
 void SQLChar::enforceLengthInvariant(){
-  if (holds_alternative<monostate>(value)) return;
-
-  if (get<string>(value).size() > length){
+  if (value.size() > length){
     cerr << "Length of VARCHAR exceeds the stipulated length" << endl;
     exit(3);
   }
 
-  if (get<string>(value).size() < length){
-    int padLength = length - get<string>(value).size();
+  if (value.size() < length){
+    int padLength = length - value.size();
     string padding(padLength, ' ');
 
-    get<string>(value) += padding;
+    value += padding;
   }
 }
 
