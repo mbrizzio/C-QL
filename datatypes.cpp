@@ -2,7 +2,7 @@
 #include "datatypes.h"
 #include "table.h"
 
-
+/////////////////////////////////// Varchar /////////////////////////////
 Varchar::Varchar() {
   length = 100;
   value = "";
@@ -38,7 +38,11 @@ void Varchar::enforceLengthInvariant(){
     exit(3);
   }
 }
+/////////////////////////////// End Varchar //////////////////////////////
 
+
+
+////////////////////////////// SQLChar //////////////////////////////////
 string Varchar::getValue(){
   return value;
 }
@@ -75,9 +79,25 @@ void SQLChar::enforceLengthInvariant(){
     value += padding;
   }
 }
+///////////////////////// End SQLChar //////////////////////////////////
 
 
-// Comparator hell
+
+/////////////////////// Misc. Operators ////////////////////////////////
+
+ostream& operator<<(ostream& os, const Varchar& self){
+  os << self.value;
+  return os;
+}
+
+ostream& operator<<(ostream& os, const SQLChar& self){
+  os << self.value;
+  return os;
+}
+
+/////////////////////// Comparator hell (all classes) ///////////////////
+
+////// Varchar vs. Varchar
 bool Varchar::operator==(const Varchar &rhs){
   return comparatorHelper(value, rhs.value, std::equal_to<>{});
 }

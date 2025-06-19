@@ -9,8 +9,6 @@
 
 using namespace std;
 
-using nullableString = std::variant<std::string, std::monostate>;
-
 constexpr monostate Null{};
 
 class Table;
