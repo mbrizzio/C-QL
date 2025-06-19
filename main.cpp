@@ -38,9 +38,6 @@ int main(){
   
   table.print();
 
-  test_equality();
-  test_less_than();
-  test_less_than_equal();
-  test_greater_than();
-  test_greater_than_equal();
+  varcharComparatorCorrectnessTests();
+  charComparatorCorrectnessTests();
 }

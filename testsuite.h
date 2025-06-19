@@ -4,79 +4,86 @@
 
 using namespace std;
 
-void test_equality() {
+void varcharComparatorCorrectnessTests() {
     Varchar a(10, "apple");
-    Varchar b(10, "banana");
+    Varchar b(20, "banana");
+    std::string s1 = "apple";
+    std::string s2 = "banana";
+
+    cout << a << b << endl;
+
+    // Varchar vs Varchar
+    assert(a == Varchar(10, "apple"));
+    assert(a != b);
+    assert(a < b);
+    assert(a <= b);
+    assert(b > a);
+    assert(b >= a);
+
+    // std::string vs Varchar
+    assert(s1 == a);
+    assert(s1 != b);
+    assert(s1 < b);
+    assert(s1 <= b);
+    assert(s2 > a);
+    assert(s2 >= a);
+
+    // Varchar vs std::string
+    assert(a == s1);
+    assert(a != s2);
+    assert(a < s2);
+    assert(a <= s2);
+    assert(b > s1);
+    assert(b >= s1);
+}
+
+void charComparatorCorrectnessTests() {
+    SQLChar a(10, "apple");
+    SQLChar b(20, "banana");
     Varchar c(10, "apple");
-    Varchar d(10, Null);
-    Varchar e(10, monostate{});
-    Varchar empty;
+    Varchar d(20, "banana");
+    std::string s1 = "apple";
+    std::string s2 = "banana";
 
-    // == operator
-    assert((a == c) == true);
-    assert((a == b) == false);
-    assert((a == empty) == false);
-    assert((empty == a) == false);
-    assert((empty == empty) == false);
+    cout << a << b << endl;
 
-    // != operator
-    assert((a != b) == true);
-    assert((a != c) == false);
-    assert((a != empty) == false);
-    assert((empty != a) == false);
-    assert((empty != empty) == false);
-}
+    // Char vs Char
+    assert(a == SQLChar(10, "apple"));
+    assert(a != b);
+    assert(a < b);
+    assert(a <= b);
+    assert(b > a);
+    assert(b >= a);
 
-void test_less_than() {
-    Varchar a(10, "apple");
-    Varchar b(10, "banana");
-    Varchar empty;
+    // std::string vs Char
+    assert(s1 == a);
+    assert(s1 != b);
+    assert(s1 < b);
+    assert(s1 <= b);
+    assert(s2 > a);
+    assert(s2 >= a);
 
-    assert((a < b) == true);
-    assert((b < a) == false);
-    assert((a < a) == false);
-    assert((a < empty) == false);
-    assert((empty < a) == false);
-    assert((empty < empty) == false);
-}
+    // Char vs std::string
+    assert(a == s1);
+    assert(a != s2);
+    assert(a < s2);
+    assert(a <= s2);
+    assert(b > s1);
+    assert(b >= s1);
 
-void test_less_than_equal() {
-    Varchar a(10, "apple");
-    Varchar b(10, "banana");
-    Varchar c(10, "apple");
-    Varchar empty;
+    // Varchar vs. Char
+    assert(c == SQLChar(10, "apple"));
+    assert(c != b);
+    assert(c < b);
+    assert(c <= b);
+    assert(d > a);
+    assert(d >= a);
 
-    assert((a <= b) == true);
-    assert((a <= c) == true);
-    assert((b <= a) == false);
-    assert((a <= empty) == false);
-    assert((empty <= a) == false);
-    assert((empty <= empty) == false);
-}
-
-void test_greater_than() {
-    Varchar a(10, "apple");
-    Varchar b(10, "banana");
-    Varchar empty;
-
-    assert((b > a) == true);
-    assert((a > b) == false);
-    assert((a > a) == false);
-    assert((a > empty) == false);
-    assert((empty > a) == false);
-    assert((empty > empty) == false);
-}
-
-void test_greater_than_equal() {
-    Varchar a(10, "apple");
-    Varchar b(10, "banana");
-    Varchar c(10, "apple");
-    Varchar empty;
-
-    assert((b >= a) == true);
-    assert((a >= b) == false);
-    assert((a >= c) == true);
-    assert((a >= empty) == false);
-    assert((empty >= a) == false);
-    assert((empty >= empty) == false);
+    // Char vs. Varchar
+    assert(a == Varchar(10, "apple"));
+    assert(a != d);
+    assert(a < d);
+    assert(a <= d);
+    assert(b > c);
+    assert(b >= c);
 }

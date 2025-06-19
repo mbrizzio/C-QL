@@ -33,13 +33,9 @@ class Varchar{
     
     // Helper function to check for null values
     template <typename Comparator>
-    bool inline comparatorHelper
-    (const string &lhs, const nullableString &rhs, const Comparator comp){
-      if (holds_alternative<monostate>(lhs) || holds_alternative<monostate>(rhs)){
-        return false;
-      }
-
-      return comp(get<string>(lhs), get<string>(rhs));
+    bool comparatorHelper
+    (const string &lhs, const string &rhs, const Comparator comp) const {
+      return comp(lhs, rhs);
     }
 
     bool operator==(const Varchar &rhs);
@@ -47,7 +43,23 @@ class Varchar{
     bool operator<(const Varchar &rhs);
     bool operator>(const Varchar &rhs);
     bool operator<=(const Varchar &rhs);
-    bool operator>=(const Varchar &rhs);
+    bool operator>=(const Varchar &rhs); 
+
+    bool operator==(const string &rhs);
+    bool operator!=(const string &rhs);
+    bool operator<(const string &rhs);
+    bool operator>(const string &rhs);
+    bool operator<=(const string &rhs);
+    bool operator>=(const string &rhs); 
+
+    friend bool operator==(const string &lhs, const Varchar &rhs);
+    friend bool operator!=(const string &lhs, const Varchar &rhs);
+    friend bool operator<(const string &lhs, const Varchar &rhs);
+    friend bool operator>(const string &lhs, const Varchar &rhs);
+    friend bool operator<=(const string &lhs, const Varchar &rhs);
+    friend bool operator>=(const string &lhs, const Varchar &rhs);
+
+    friend ostream& operator<<(ostream& os, const Varchar& self);
 
   private:
     virtual void enforceLengthInvariant();
@@ -64,8 +76,48 @@ class SQLChar : public Varchar {
     SQLChar(Table* table, std::string name);
     SQLChar(Table* table, string name, string Value);
 
+    // resolve ambiguity by  overloading the parent comparators
+    bool operator==(const SQLChar &rhs);
+    bool operator!=(const SQLChar &rhs);
+    bool operator<(const SQLChar &rhs);
+    bool operator>(const SQLChar &rhs);
+    bool operator<=(const SQLChar &rhs);
+    bool operator>=(const SQLChar &rhs);
+    
+    bool operator==(const string &rhs);
+    bool operator!=(const string &rhs);
+    bool operator<(const string &rhs);
+    bool operator>(const string &rhs);
+    bool operator<=(const string &rhs);
+    bool operator>=(const string &rhs); 
+    
+    friend bool operator==(const string &lhs, const SQLChar &rhs);
+    friend bool operator!=(const string &lhs, const SQLChar &rhs);
+    friend bool operator<(const string &lhs, const SQLChar &rhs);
+    friend bool operator>(const string &lhs, const SQLChar &rhs);
+    friend bool operator<=(const string &lhs, const SQLChar &rhs);
+    friend bool operator>=(const string &lhs, const SQLChar &rhs);
+
+    friend bool operator==(const Varchar &lhs, const SQLChar &rhs);
+    friend bool operator!=(const Varchar &lhs, const SQLChar &rhs);
+    friend bool operator<(const Varchar &lhs, const SQLChar &rhs);
+    friend bool operator>(const Varchar &lhs, const SQLChar &rhs);
+    friend bool operator<=(const Varchar &lhs, const SQLChar &rhs);
+    friend bool operator>=(const Varchar &lhs, const SQLChar &rhs);
+
+    friend bool operator==(const SQLChar &lhs, const Varchar &rhs);
+    friend bool operator!=(const SQLChar &lhs, const Varchar &rhs);
+    friend bool operator<(const SQLChar &lhs, const Varchar &rhs);
+    friend bool operator>(const SQLChar &lhs, const Varchar &rhs);
+    friend bool operator<=(const SQLChar &lhs, const Varchar &rhs);
+    friend bool operator>=(const SQLChar &lhs, const Varchar &rhs);
+
+    friend ostream& operator<<(ostream& os, const SQLChar& self);
+
   private:
     void enforceLengthInvariant() override;
+
+    string getUnpaddedValue() const;
 };
 
 using Types = variant<

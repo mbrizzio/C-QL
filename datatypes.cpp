@@ -38,14 +38,15 @@ void Varchar::enforceLengthInvariant(){
     exit(3);
   }
 }
+
+string Varchar::getValue(){
+  return value;
+}
 /////////////////////////////// End Varchar //////////////////////////////
 
 
 
 ////////////////////////////// SQLChar //////////////////////////////////
-string Varchar::getValue(){
-  return value;
-}
 
 SQLChar::SQLChar() : Varchar() {};
 
@@ -79,11 +80,20 @@ void SQLChar::enforceLengthInvariant(){
     value += padding;
   }
 }
+
+string SQLChar::getUnpaddedValue() const{
+  auto end = value.end();
+  auto begin = value.begin();
+
+  while (end != begin && *(--end) == ' ');
+
+  return string(begin, ++end);
+}
 ///////////////////////// End SQLChar //////////////////////////////////
 
 
 
-/////////////////////// Misc. Operators ////////////////////////////////
+/////////////////////// os operators (all classes) //////////////////////
 
 ostream& operator<<(ostream& os, const Varchar& self){
   os << self.value;
@@ -120,4 +130,186 @@ bool Varchar::operator<=(const Varchar &rhs){
 
 bool Varchar::operator>=(const Varchar &rhs){
   return comparatorHelper(value, rhs.value, std::greater_equal<>{});
+}
+
+
+////// Varchar vs. String
+bool Varchar::operator==(const string &rhs){
+  return comparatorHelper(value, rhs, std::equal_to<>{});
+} 
+
+bool Varchar::operator!=(const string &rhs){
+  return comparatorHelper(value, rhs, std::not_equal_to<>{});
+}
+
+bool Varchar::operator<(const string &rhs){
+  return comparatorHelper(value, rhs, std::less<>{});
+}
+
+bool Varchar::operator>(const string &rhs){
+  return comparatorHelper(value, rhs, std::greater<>{});
+}
+
+bool Varchar::operator<=(const string &rhs){
+  return comparatorHelper(value, rhs, std::less_equal<>{});
+}
+
+bool Varchar::operator>=(const string &rhs){
+  return comparatorHelper(value, rhs, std::greater_equal<>{});
+} 
+
+
+///// String vs. Varchar
+bool operator==(const string &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.value, std::equal_to<>{});
+}
+
+bool operator!=(const string &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.value, std::not_equal_to<>{});
+}
+
+bool operator<(const string &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.value, std::less<>{});
+}
+
+bool operator>(const string &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.value, std::greater<>{});
+}
+
+bool operator<=(const string &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.value, std::less_equal<>{});
+}
+
+bool operator>=(const string &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.value, std::greater_equal<>{});
+}
+
+
+///// SQLChar vs. SQLChar
+bool SQLChar::operator==(const SQLChar &rhs){
+  return comparatorHelper(value, rhs.value, std::equal_to<>{});
+}
+
+bool SQLChar::operator!=(const SQLChar &rhs){
+  return comparatorHelper(value, rhs.value, std::not_equal_to<>{});
+}
+
+bool SQLChar::operator<(const SQLChar &rhs){
+  return comparatorHelper(value, rhs.value, std::less<>{});
+}
+
+bool SQLChar::operator>(const SQLChar &rhs){
+  return comparatorHelper(value, rhs.value, std::greater<>{});
+}
+
+bool SQLChar::operator<=(const SQLChar &rhs){
+  return comparatorHelper(value, rhs.value, std::less_equal<>{});
+}
+
+bool SQLChar::operator>=(const SQLChar &rhs){
+  return comparatorHelper(value, rhs.value, std::greater_equal<>{});
+}
+
+
+///// String vs. SQLChar
+bool operator==(const string &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.getUnpaddedValue(), std::equal_to<>{});
+}
+
+bool operator!=(const string &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.getUnpaddedValue(), std::not_equal_to<>{});
+}
+
+bool operator<(const string &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.getUnpaddedValue(), std::less<>{});
+}
+
+bool operator>(const string &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.getUnpaddedValue(), std::greater<>{});
+}
+
+bool operator<=(const string &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.getUnpaddedValue(), std::less_equal<>{});
+}
+
+bool operator>=(const string &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs, rhs.getUnpaddedValue(), std::greater_equal<>{});
+}
+
+
+////// SQLChar vs. String
+bool SQLChar::operator==(const string &rhs){
+  return comparatorHelper(getUnpaddedValue(), rhs, std::equal_to<>{});
+} 
+
+bool SQLChar::operator!=(const string &rhs){
+  return comparatorHelper(getUnpaddedValue(), rhs, std::not_equal_to<>{});
+}
+
+bool SQLChar::operator<(const string &rhs){
+  return comparatorHelper(getUnpaddedValue(), rhs, std::less<>{});
+}
+
+bool SQLChar::operator>(const string &rhs){
+  return comparatorHelper(getUnpaddedValue(), rhs, std::greater<>{});
+}
+
+bool SQLChar::operator<=(const string &rhs){
+  return comparatorHelper(getUnpaddedValue(), rhs, std::less_equal<>{});
+}
+
+bool SQLChar::operator>=(const string &rhs){
+  return comparatorHelper(getUnpaddedValue(), rhs, std::greater_equal<>{});
+} 
+
+
+
+///// Varchar vs. SQLChar
+bool operator==(const Varchar &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::equal_to<>{});
+}
+
+bool operator!=(const Varchar &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::not_equal_to<>{});
+}
+
+bool operator<(const Varchar &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::less<>{});
+}
+
+bool operator>(const Varchar &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::greater<>{});
+}
+
+bool operator<=(const Varchar &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::less_equal<>{});
+}
+
+bool operator>=(const Varchar &lhs, const SQLChar &rhs){
+  return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::greater_equal<>{});
+}
+
+///// SQLChar vs. Varchar
+bool operator==(const SQLChar &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs.getUnpaddedValue(), rhs.value, std::equal_to<>{});
+}
+
+bool operator!=(const SQLChar &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs.getUnpaddedValue(), rhs.value, std::not_equal_to<>{});
+}
+
+bool operator<(const SQLChar &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs.getUnpaddedValue(), rhs.value, std::less<>{});
+}
+
+bool operator>(const SQLChar &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs.getUnpaddedValue(), rhs.value, std::greater<>{});
+}
+
+bool operator<=(const SQLChar &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs.getUnpaddedValue(), rhs.value, std::less_equal<>{});
+}
+
+bool operator>=(const SQLChar &lhs, const Varchar &rhs){
+  return rhs.comparatorHelper(lhs.getUnpaddedValue(), rhs.value, std::greater_equal<>{});
 }
