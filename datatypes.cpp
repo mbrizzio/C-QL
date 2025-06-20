@@ -105,7 +105,32 @@ ostream& operator<<(ostream& os, const SQLChar& self){
   return os;
 }
 
+ostream& operator<<(ostream& os, const Types& self){
+  if (holds_alternative<monostate>(self)) os << "NULL";
+  else if (holds_alternative<string>(self)) os << get<string>(self);
+  else if (holds_alternative<SQLChar>(self)) os << get<SQLChar>(self).getValue();
+  else if (holds_alternative<Varchar>(self)) os << get<Varchar>(self).getValue();
+  else if (holds_alternative<float>(self)){
+    os << fixed << setprecision(4) << get<float>(self);
+  }
+  else if (holds_alternative<int>(self)) os << to_string(get<int>(self));
+  else if (holds_alternative<int16_t>(self)) os << to_string(get<int16_t>(self));
+  else if (holds_alternative<int64_t>(self)) os << to_string(get<int64_t>(self));
+  else {
+    cerr << "Datatype of column currently unsupported by this function" << endl;
+    exit(2);
+  }
+
+  return os;
+
+}
+
 /////////////////////// Comparator hell (all classes) ///////////////////
+////// Monostate vs. Anything
+
+
+////// Anything vs. Monostate
+
 
 ////// Varchar vs. Varchar
 bool Varchar::operator==(const Varchar &rhs){
@@ -264,7 +289,7 @@ bool SQLChar::operator>=(const string &rhs){
 
 
 
-///// Varchar vs. SQLChar
+////// Varchar vs. SQLChar
 bool operator==(const Varchar &lhs, const SQLChar &rhs){
   return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::equal_to<>{});
 }
@@ -289,7 +314,7 @@ bool operator>=(const Varchar &lhs, const SQLChar &rhs){
   return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::greater_equal<>{});
 }
 
-///// SQLChar vs. Varchar
+////// SQLChar vs. Varchar
 bool operator==(const SQLChar &lhs, const Varchar &rhs){
   return rhs.comparatorHelper(lhs.getUnpaddedValue(), rhs.value, std::equal_to<>{});
 }

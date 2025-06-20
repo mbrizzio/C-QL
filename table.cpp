@@ -3,7 +3,7 @@
 #include "table.h"
 #include <iostream>
 #include <sstream>
-#include <iomanip>
+
 
 using namespace std;
 
@@ -94,25 +94,12 @@ void Table::print() {
 
     for (string name : columnNames) {
       Types value = columns[name][i];
-      string toPrint = "";
+      
 
       // Extract the value from the cell
-      if (holds_alternative<monostate>(value)) toPrint = "NULL";
-      else if (holds_alternative<string>(value)) toPrint = get<string>(value);
-      else if (holds_alternative<SQLChar>(value)) toPrint = get<SQLChar>(value).getValue();
-      else if (holds_alternative<Varchar>(value)) toPrint = get<Varchar>(value).getValue();
-      else if (holds_alternative<float>(value)){
-        ostringstream out;
-        out << fixed << setprecision(4) << get<float>(value);
-        toPrint = out.str();
-      }
-      else if (holds_alternative<int>(value)) toPrint = to_string(get<int>(value));
-      else if (holds_alternative<int16_t>(value)) toPrint = to_string(get<int16_t>(value));
-      else if (holds_alternative<int64_t>(value)) toPrint = to_string(get<int64_t>(value));
-      else {
-        cerr << "Datatype of column currently unsupported by this function" << endl;
-        exit(2);
-      }
+      ostringstream os;
+      os << value;
+      string toPrint = os.str();
 
       length = width[name] - toPrint.size();
       if (length < 0) { // Edge case where value would not fit in col

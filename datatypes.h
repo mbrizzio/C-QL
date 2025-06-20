@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <compare>
+#include <iomanip>
 
 using namespace std;
 
@@ -130,6 +131,8 @@ using Types = variant<
   SQLChar,    //CHAR
   monostate   //NULL
 >;
+
+ostream& operator<<(ostream& os, const Types& self);
 
 using Row = unordered_map<string, Types>;
 using Column = vector<Types>;
