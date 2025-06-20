@@ -8,6 +8,10 @@ Varchar::Varchar() {
   value = "";
 }
 
+Varchar::Varchar(string Value) : value(Value){
+  length = Value.size();
+}
+
 Varchar::Varchar(int Length) : length(Length) {
   value = "";
 
@@ -49,6 +53,8 @@ string Varchar::getValue() const {
 ////////////////////////////// SQLChar //////////////////////////////////
 
 SQLChar::SQLChar() : Varchar() {};
+
+SQLChar::SQLChar(string Value) : Varchar(Value) {};
 
 SQLChar::SQLChar(int Length) : Varchar(Length) {
   enforceLengthInvariant();
@@ -126,11 +132,197 @@ ostream& operator<<(ostream& os, const Types& self){
 }
 
 /////////////////////// Comparator hell (all classes) ///////////////////
-////// Monostate vs. Anything
+
+////// Types vs. Anything
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator==(const StrictTypes& lhs, const T& rhs) {
+  return std::visit([&](const auto& value) -> bool {
+    return value == rhs;
+  }, lhs);
+}
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator!=(const StrictTypes& lhs, const T& rhs) {
+  return std::visit([&](const auto& value) -> bool {
+    return value != rhs;
+  }, lhs);
+}
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator<(const StrictTypes& lhs, const T& rhs) {
+  return std::visit([&](const auto& value) -> bool {
+    return value < rhs;
+  }, lhs);
+}
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator<=(const StrictTypes& lhs, const T& rhs) {
+  return std::visit([&](const auto& value) -> bool {
+    return value <= rhs;
+  }, lhs);
+}
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator>=(const StrictTypes& lhs, const T& rhs) {
+  return std::visit([&](const auto& value) -> bool {
+    return value >= rhs;
+  }, lhs);
+}
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator>(const StrictTypes& lhs, const T& rhs) {
+  return std::visit([&](const auto& value) -> bool {
+    return value > rhs;
+  }, lhs);
+}
+
+
+////// Anything vs. Types
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator==(const T& lhs, const StrictTypes& rhs) {
+  return rhs == lhs;
+}
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator!=(const T& lhs, const StrictTypes& rhs) {
+  return rhs != lhs;
+}
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator>(const T& lhs, const StrictTypes& rhs) {
+  return rhs > lhs;
+}
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator>=(const T& lhs, const StrictTypes& rhs) {
+  return rhs >= lhs;
+}
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator<=(const T& lhs, const StrictTypes& rhs) {
+  return rhs <= lhs;
+}
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator<(const T& lhs, const StrictTypes& rhs) {
+  return rhs < lhs;
+}
+
+
+////// Types vs. Types
+template<typename T>
+STRICTLY_TYPES(T)
+operator==(const T& lhs, const T& rhs){
+  return std::visit([&](const auto& lhs_val, const auto& rhs_val) -> bool {
+    return lhs_val == rhs_val; 
+  }, lhs, rhs);
+}
+
+template<typename T>
+STRICTLY_TYPES(T)
+operator!=(const T& lhs, const T& rhs){
+  return std::visit([&](const auto& lhs_val, const auto& rhs_val) -> bool {
+    return lhs_val != rhs_val; 
+  }, lhs, rhs);
+}
+
+template<typename T>
+STRICTLY_TYPES(T)
+operator<(const T& lhs, const T& rhs){
+  return std::visit([&](const auto& lhs_val, const auto& rhs_val) -> bool {
+    return lhs_val < rhs_val; 
+  }, lhs, rhs);
+}
+
+template<typename T>
+STRICTLY_TYPES(T)
+operator<=(const T& lhs, const T& rhs){
+  return std::visit([&](const auto& lhs_val, const auto& rhs_val) -> bool {
+    return lhs_val <= rhs_val; 
+  }, lhs, rhs);
+}
+
+template<typename T>
+STRICTLY_TYPES(T)
+operator>(const T& lhs, const T& rhs){
+  return std::visit([&](const auto& lhs_val, const auto& rhs_val) -> bool {
+    return lhs_val > rhs_val; 
+  }, lhs, rhs);
+}
+
+template<typename T>
+STRICTLY_TYPES(T)
+operator>=(const T& lhs, const T& rhs){
+  return std::visit([&](const auto& lhs_val, const auto& rhs_val) -> bool {
+    return lhs_val >= rhs_val; 
+  }, lhs, rhs);
+}
 
 
 ////// Anything vs. Monostate
+template<typename T>
+bool operator==(const monostate&, const T &_){
+  return false;
+}
+template<typename T>
+bool operator!=(const monostate&, const T &_){
+  return true;
+}
+template<typename T>
+bool operator<(const monostate&, const T &_){
+  return false;
+}
+template<typename T>
+bool operator<=(const monostate&, const T &_){
+  return false;
+}
+template<typename T>
+bool operator>(const monostate&, const T &_){
+  return false;
+}
+template<typename T>
+bool operator>=(const monostate&, const T &_){
+  return false;
+}
 
+
+////// Monostate vs. Anything
+template<typename T>
+bool operator==(const T &_, const monostate&){
+  return false;
+}
+template<typename T>
+bool operator!=(const T &_, const monostate&){
+  return true;
+}
+template<typename T>
+bool operator<(const T &_, const monostate&){
+  return false;
+}
+template<typename T>
+bool operator<=(const T &_, const monostate&){
+  return false;
+}
+template<typename T>
+bool operator>(const T &_, const monostate&){
+  return false;
+}
+template<typename T>
+bool operator>=(const T &_, const monostate&){
+  return false;
+}
 
 ////// Varchar vs. Varchar
 bool Varchar::operator==(const Varchar &rhs){
@@ -310,7 +502,9 @@ bool operator<=(const Varchar &lhs, const SQLChar &rhs){
   return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::less_equal<>{});
 }
 
-bool operator>=(const Varchar &lhs, const SQLChar &rhs){
+template<typename StrictVarchar, typename StrictSQLChar>
+STRICT_SQLCHAR_VARCHAR(StrictVarchar, StrictSQLChar)
+operator>=(const StrictVarchar &lhs, const StrictSQLChar &rhs){
   return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::greater_equal<>{});
 }
 
@@ -335,6 +529,10 @@ bool operator<=(const SQLChar &lhs, const Varchar &rhs){
   return rhs.comparatorHelper(lhs.getUnpaddedValue(), rhs.value, std::less_equal<>{});
 }
 
-bool operator>=(const SQLChar &lhs, const Varchar &rhs){
+template<typename StrictVarchar, typename StrictSQLChar>
+STRICT_SQLCHAR_VARCHAR(StrictVarchar, StrictSQLChar)
+operator>=(const StrictSQLChar &lhs, const StrictVarchar &rhs){
   return rhs.comparatorHelper(lhs.getUnpaddedValue(), rhs.value, std::greater_equal<>{});
 }
+
+/////////////////////////// End comparator hell ////////////////////////

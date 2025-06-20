@@ -10,6 +10,21 @@
 
 using namespace std;
 
+#define STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes) \
+  std::enable_if_t< \
+    std::is_same_v<std::decay_t<StrictTypes>, Types> && \
+    !std::is_same_v<std::decay_t<T>, Types>, \
+  bool>
+
+#define STRICTLY_TYPES(T) \
+  enable_if_t<is_same_v<decay_t<T>, Types>, bool>
+
+#define STRICT_SQLCHAR_VARCHAR(StrictVarchar, StrictSQLChar) \
+    std::enable_if_t< \
+      std::is_same_v<std::decay_t<StrictVarchar>, Varchar> && \
+      std::is_same_v<std::decay_t<StrictSQLChar>, SQLChar>, \
+    bool> 
+
 constexpr monostate Null{};
 
 class Table;
@@ -21,6 +36,8 @@ class Varchar{
   public:
     // Constructors
     Varchar();
+    Varchar(string Value);
+
     Varchar(int Length);
     Varchar(int Length, string Value);
 
@@ -71,6 +88,8 @@ class SQLChar : public Varchar {
     using Varchar::Varchar;
 
     SQLChar();
+    SQLChar(string Value);
+
     SQLChar(int Length);
     SQLChar(int Length, string Value);
 
@@ -104,7 +123,12 @@ class SQLChar : public Varchar {
     friend bool operator<(const Varchar &lhs, const SQLChar &rhs);
     friend bool operator>(const Varchar &lhs, const SQLChar &rhs);
     friend bool operator<=(const Varchar &lhs, const SQLChar &rhs);
-    friend bool operator>=(const Varchar &lhs, const SQLChar &rhs);
+    template<typename StrictVarchar, typename StrictSQLChar>
+    std::enable_if_t< 
+      std::is_same_v<std::decay_t<StrictVarchar>, Varchar> && 
+      std::is_same_v<std::decay_t<StrictSQLChar>, SQLChar>, 
+    bool> 
+    friend operator>=(const StrictVarchar &lhs, const StrictSQLChar &rhs);
 
     friend bool operator==(const SQLChar &lhs, const Varchar &rhs);
     friend bool operator!=(const SQLChar &lhs, const Varchar &rhs);
@@ -131,6 +155,83 @@ using Types = variant<
   SQLChar,    //CHAR
   monostate   //NULL
 >;
+
+////// Types vs. Anything
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator==(const StrictTypes& lhs, const T& rhs);
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator!=(const StrictTypes& lhs, const T& rhs);
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator<(const StrictTypes& lhs, const T& rhs);
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator<=(const StrictTypes& lhs, const T& rhs);
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator>=(const StrictTypes& lhs, const T& rhs);
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator>(const StrictTypes& lhs, const T& rhs);
+
+////// Anything vs. Types
+template<typename T, typename StrictTypes> 
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes) 
+operator==(const T& lhs, const StrictTypes& rhs);
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator!=(const T& lhs, const StrictTypes& rhs);
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator>(const T& lhs, const StrictTypes& rhs);
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator>=(const T& lhs, const StrictTypes& rhs);
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator<=(const T& lhs, const StrictTypes& rhs);
+
+template<typename T, typename StrictTypes>
+STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
+operator<(const T& lhs, const StrictTypes& rhs);
+
+
+////// Types vs. Types
+template<typename T> 
+STRICTLY_TYPES(T) 
+operator==(const T& lhs, const T& rhs);
+
+template<typename T>
+STRICTLY_TYPES(T)
+operator!=(const T& lhs, const T& rhs);
+
+template<typename T>
+STRICTLY_TYPES(T)
+operator<(const T& lhs, const T& rhs);
+
+template<typename T>
+STRICTLY_TYPES(T)
+operator<=(const T& lhs, const T& rhs);
+
+template<typename T>
+STRICTLY_TYPES(T)
+operator>(const T& lhs, const T& rhs);
+
+template<typename T>
+STRICTLY_TYPES(T)
+operator>=(const T& lhs, const T& rhs);
+
 
 ostream& operator<<(ostream& os, const Types& self);
 
