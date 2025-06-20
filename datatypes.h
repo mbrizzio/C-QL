@@ -26,7 +26,7 @@ class Varchar{
     Varchar(Table* table, std::string name);
     Varchar(Table* table, std::string name, string Value);
 
-    string getValue();
+    string getValue() const;
 
     string value;
     int length;

@@ -39,7 +39,7 @@ void Varchar::enforceLengthInvariant(){
   }
 }
 
-string Varchar::getValue(){
+string Varchar::getValue() const {
   return value;
 }
 /////////////////////////////// End Varchar //////////////////////////////
