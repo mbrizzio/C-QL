@@ -99,6 +99,81 @@ string SQLChar::getUnpaddedValue() const{
 
 
 /////////////////////////// Date ///////////////////////////////////////
+Date::Date(const int Year, const int Month, const int Day) :
+          year(Year), month(Month), day(Day) {
+  enforceDateInvariants();
+  dateToEpoch();
+}
+
+Date::Date(const int Epoch) : epoch(Epoch) {
+  epochToDate();
+}
+
+// YYYY-MM-DD
+Date::Date(string &YearMonthDay){
+  if (YearMonthDay.size() != 10) {
+    cerr << "Incorrect format for this constructor (should be YYYY-MM-DD)" << endl;
+    exit(3);
+  }
+
+  year = stoi(YearMonthDay.substr(0, 4));
+  month = stoi(YearMonthDay.substr(5, 2));
+  day = stoi(YearMonthDay.substr(8, 2));
+
+  enforceDateInvariants();
+  dateToEpoch();
+}
+
+
+void Date::dateToEpoch(){
+  int updatedEpoch = 0;
+
+  // Additions due to years
+  updatedEpoch += (year - 1) * 365;
+  updatedEpoch += leapDaysUpToCurrentYear();
+
+  // Additions due to months
+  if (isLeapYear() && month > 2) ++updatedEpoch;
+  int pastMonths = month;
+  while (--pastMonths > 0){
+    int daysToSubstract = daysPerMonth[pastMonths - 1];
+    updatedEpoch += daysToSubstract;
+  }
+
+  // Additions due to days
+  updatedEpoch += day;
+
+  epoch = updatedEpoch;
+}
+
+void Date::epochToDate(){
+  // First we generate the epoch from years
+  int naiveYears = (epoch / (int)365) + 1;
+  Date naiveYearAsDate = Date(naiveYears, 1, 1);
+  int naiveRemainder = epoch - naiveYears*365 - 
+                       naiveYearAsDate.leapDaysUpToCurrentYear() -
+                       naiveYearAsDate.isLeapYear(); // the final substraction could be buggy, think through!
+  
+  // Set year right away so we can make use of helpers.
+  year = naiveYears;
+  if (naiveRemainder <= 0) --year;
+
+  int updatedRemainder = epoch - year*365 - leapDaysUpToCurrentYear();
+
+  // Create the month
+  month = 1;
+  while (updatedRemainder > 0){
+    if (isLeapYear() && month == 2) --updatedRemainder;
+    updatedRemainder -= daysPerMonth[month];
+    ++month;
+  }
+  --month;
+  updatedRemainder += daysPerMonth[month];
+  if (isLeapYear() && month == 2) ++updatedRemainder;
+
+  // The remainder represents the days of the month, so nothing left to do
+  day = updatedRemainder;
+}
 
 bool Date::isLeapYear() const {
   // The rule is: evey 4 years there is a leap years, multiples of 100 are skipped
@@ -106,14 +181,14 @@ bool Date::isLeapYear() const {
   return (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0));
 }
 
-int Date::leapYearsSinceToday() const {
-  int leapYears = year / (int)4;
+int Date::leapDaysUpToCurrentYear() const {
+  int leapYears = (year - 1) / (int)4;
 
   // Remove multiples of 100
-  leapYears -= year / (int)100;
+  leapYears -= (year - 1) / (int)100;
 
   // Add multiples of 400
-  leapYears += year / (int)400;
+  leapYears += (year - 1) / (int)400;
 
   return leapYears;
 }
@@ -125,13 +200,13 @@ void Date::enforceDateInvariants() const {
     exit(3);
   }
   
-  bool monthCheck = (month >= 0 && year <= 12);
+  bool monthCheck = (month >= 0 && month <= 12);
   if (!monthCheck){
     cerr << "The month is not in the supported range" << endl;
     exit(3);
   }
 
-  bool dayCheck = (day <= daysPerMonth[month] + (month == 2) * isLeapYear());
+  bool dayCheck = (day <= daysPerMonth[month - 1] + (month == 2) * isLeapYear());
   if (!dayCheck){
     cerr << "The day is too large for the specified month" << endl;
     exit(3);
@@ -144,8 +219,14 @@ void Date::enforceDateInvariants() const {
   }
 }
 
-/////////////////////// os operators (all classes) //////////////////////
+//////////////////////// End Date ///////////////////////////////////////
 
+
+
+/////////////////////// misc operators (all classes) //////////////////////
+
+
+////// OS operators 
 ostream& operator<<(ostream& os, const Varchar& self){
   os << self.value;
   return os;
@@ -153,6 +234,14 @@ ostream& operator<<(ostream& os, const Varchar& self){
 
 ostream& operator<<(ostream& os, const SQLChar& self){
   os << self.value;
+  return os;
+}
+
+ostream& operator<<(ostream& os, const Date& self){
+  os << setfill('0') << setw(4) << self.year << '-';
+  os << setfill('0') << setw(2) << self.month << '-';
+  os << setfill('0') << setw(2) << self.day;
+
   return os;
 }
 

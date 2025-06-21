@@ -181,7 +181,9 @@ class Date {
 
     bool isLeapYear() const;
     
-    int leapYearsSinceToday() const;
+    // IMPORTANT: Does not consider the current year!
+    // if year = 4, there have been 0 up to today
+    int leapDaysUpToCurrentYear() const;
 
     // Takes the current epoch, and overwrites year, month, day
     // with what they should be

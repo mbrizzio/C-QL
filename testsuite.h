@@ -291,7 +291,7 @@ struct TestCase {
     std::string description;
 };
 
-void runTestSuite() {
+void dateUnitTests() {
     std::cout << C_BLUE << "Starting Date class test suite..." << C_RESET << std::endl;
     std::cout << "-----------------------------------" << std::endl;
 
@@ -310,9 +310,9 @@ void runTestSuite() {
         {2025, 1, 1, 739252, "Start of year after leap year"},
 
         // --- Century Non-Leap Year (divisible by 100 but not 400) ---
-        {1900, 2, 28, 693681, "Day before a 'skipped' leap day"},
-        {1900, 3, 1, 693682, "Day after a 'skipped' leap day"}, // Epoch must be consecutive
-        {1900, 12, 31, 694046, "End of a century non-leap year"},
+        {1900, 2, 28, 693654, "Day before a 'skipped' leap day"},
+        {1900, 3, 1, 693655, "Day after a 'skipped' leap day"}, // Epoch must be consecutive
+        {1900, 12, 31, 693960, "End of a century non-leap year"},
         
         // --- Quadricentennial Leap Year (divisible by 400) ---
         {2000, 2, 28, 730178, "Day before a quadricentennial leap day"},
@@ -320,8 +320,8 @@ void runTestSuite() {
         {2000, 3, 1, 730180, "Day after a quadricentennial leap day"},
         
         // --- Boundary and Recent Dates ---
-        {2023, 12, 31, 738886, "End of a recent common year"},
-        {2024, 1, 1, 738887, "Start of a recent leap year"},
+        {2023, 12, 31, 738885, "End of a recent common year"},
+        {2024, 1, 1, 738886, "Start of a recent leap year"},
         {2025, 6, 21, 739423, "A random recent date"},
 
         // --- Far Future Date ---

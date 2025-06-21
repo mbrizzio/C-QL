@@ -41,4 +41,5 @@ int main(){
   varcharComparatorCorrectnessTests();
   charComparatorCorrectnessTests();
   runTypesComparisonTests();
+  dateUnitTests();
 }
