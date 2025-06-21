@@ -40,4 +40,5 @@ int main(){
 
   varcharComparatorCorrectnessTests();
   charComparatorCorrectnessTests();
+  runTypesComparisonTests();
 }

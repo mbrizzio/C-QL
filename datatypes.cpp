@@ -114,8 +114,8 @@ ostream& operator<<(ostream& os, const SQLChar& self){
 ostream& operator<<(ostream& os, const Types& self){
   if (holds_alternative<monostate>(self)) os << "NULL";
   else if (holds_alternative<string>(self)) os << get<string>(self);
-  else if (holds_alternative<SQLChar>(self)) os << get<SQLChar>(self).getValue();
-  else if (holds_alternative<Varchar>(self)) os << get<Varchar>(self).getValue();
+  else if (holds_alternative<SQLChar>(self)) os << get<SQLChar>(self);
+  else if (holds_alternative<Varchar>(self)) os << get<Varchar>(self);
   else if (holds_alternative<float>(self)){
     os << fixed << setprecision(4) << get<float>(self);
   }
