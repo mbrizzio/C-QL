@@ -25,9 +25,6 @@ constexpr monostate Null{};
 
 class Table;
 
-// Should just remove NULL support from this class...
-// Or maybe keep it this way for now and see if it truly becomes a problem
-// Make subsequent classes that don't support NULL and test those
 class Varchar{
   public:
     // Constructors
@@ -134,6 +131,65 @@ class SQLChar : public Varchar {
     void enforceLengthInvariant() override;
 
     string getUnpaddedValue() const;
+};
+
+constexpr array<int, 12> daysPerMonth = 
+          {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+enum Components{
+  DAYS,
+  MONTHS, 
+  YEARS
+};
+
+class Date {
+  public:
+    Date(const int Year, const int Month, const int Day);
+
+    // YYYY-MM-DD
+    Date(string &YearMonthDay);
+
+    // Days since 0001-01-01
+    Date(const int Epoch);
+
+    bool operator==(const Date &rhs) const;
+    bool operator!=(const Date &rhs) const;
+    bool operator<(const Date &rhs) const;
+    bool operator>(const Date &rhs) const;
+    bool operator<=(const Date &rhs) const;
+    bool operator>=(const Date &rhs) const;
+
+    bool operator-(const Date &rhs) const;
+    bool operator+(const Date &rhs) const;
+    bool operator-=(const Date &rhs);
+    bool operator+=(const Date &rhs);
+
+    explicit operator int() const;
+
+    friend ostream& operator<<(ostream& os, const Date& self);
+
+    Date dateAdd(const int rhs, const Components mode);
+    Date dateSub(const int rhs, const Components mode);
+
+    int day;
+    int month;
+    int year;
+    int epoch; // Days since start = 0001-01-01
+
+  private:
+    void enforceDateInvariants() const;
+
+    bool isLeapYear() const;
+    
+    int leapYearsSinceToday() const;
+
+    // Takes the current epoch, and overwrites year, month, day
+    // with what they should be
+    void epochToDate();
+
+    // Takes the current year, month, day, and overwrites what
+    // the epoch should be
+    void dateToEpoch();
 };
 
 // Defining a type trait for string-like classes
@@ -258,6 +314,7 @@ STRICTLY_NOT_TYPES_AND_STRICTLY_TYPES(T, StrictTypes)
 operator>=(const StrictTypes& lhs, const T& rhs) {
   return lhs >= static_cast<Types>(rhs);
 }
+
 
 ////// Anything vs. Types
 template<typename T, typename StrictTypes>

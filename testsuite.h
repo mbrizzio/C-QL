@@ -275,3 +275,117 @@ void runTypesComparisonTests() {
     test_any_vs_types();
     test_integer_and_float_cross_comparisons();
 }
+
+#define C_GREEN   "\x1B[32m"
+#define C_RED     "\x1B[31m"
+#define C_YELLOW  "\x1B[33m"
+#define C_BLUE    "\x1B[34m"
+#define C_RESET   "\x1B[0m"
+
+// A structure to hold all the information for a single test case.
+struct TestCase {
+    int year;
+    int month;
+    int day;
+    long expected_epoch;
+    std::string description;
+};
+
+void runTestSuite() {
+    std::cout << C_BLUE << "Starting Date class test suite..." << C_RESET << std::endl;
+    std::cout << "-----------------------------------" << std::endl;
+
+    // A collection of test cases, including simple ones and tricky edge cases.
+    const std::vector<TestCase> testCases = {
+        // --- Basic Cases ---
+        {1, 1, 1, 1, "The first day of the epoch"},
+        {1, 3, 5, 64, "Simple date in the first year"},
+        {2, 1, 1, 366, "First day of the second year"},
+        
+        // --- Standard Leap Year (divisible by 4) ---
+        {2024, 2, 28, 738944, "Day before a standard leap day"},
+        {2024, 2, 29, 738945, "A standard leap day"},
+        {2024, 3, 1, 738946, "Day after a standard leap day"},
+        {2024, 12, 31, 739251, "End of a standard leap year"},
+        {2025, 1, 1, 739252, "Start of year after leap year"},
+
+        // --- Century Non-Leap Year (divisible by 100 but not 400) ---
+        {1900, 2, 28, 693681, "Day before a 'skipped' leap day"},
+        {1900, 3, 1, 693682, "Day after a 'skipped' leap day"}, // Epoch must be consecutive
+        {1900, 12, 31, 694046, "End of a century non-leap year"},
+        
+        // --- Quadricentennial Leap Year (divisible by 400) ---
+        {2000, 2, 28, 730178, "Day before a quadricentennial leap day"},
+        {2000, 2, 29, 730179, "A quadricentennial leap day"},
+        {2000, 3, 1, 730180, "Day after a quadricentennial leap day"},
+        
+        // --- Boundary and Recent Dates ---
+        {2023, 12, 31, 738886, "End of a recent common year"},
+        {2024, 1, 1, 738887, "Start of a recent leap year"},
+        {2025, 6, 21, 739423, "A random recent date"},
+
+        // --- Far Future Date ---
+        {9999, 12, 31, 3652059, "Maximum date in many systems"}
+    };
+
+    int passed_count = 0;
+    int total_tests = testCases.size() * 2; // Each case has two tests (YMD->E and E->YMD)
+
+    for (const auto& tc : testCases) {
+        bool test1_passed = false;
+        bool test2_passed = false;
+
+        std::cout << C_YELLOW << "\nTesting Case: " << tc.description << " ("
+                  << std::setfill('0') << std::setw(4) << tc.year << "-" 
+                  << std::setw(2) << tc.month << "-" << std::setw(2) << tc.day << ")" << C_RESET << std::endl;
+
+        // --- Test 1: Instantiate with Y-M-D and check epoch ---
+        try {
+            Date d_from_ymd(tc.year, tc.month, tc.day);
+            long actual_epoch = d_from_ymd.epoch;
+            if (actual_epoch == tc.expected_epoch) {
+                std::cout << C_GREEN << "  [PASS]" << C_RESET << " YMD -> Epoch. Correct epoch calculated: " << actual_epoch << std::endl;
+                test1_passed = true;
+            } else {
+                std::cout << C_RED << "  [FAIL]" << C_RESET << " YMD -> Epoch. Expected " << tc.expected_epoch << " but got " << actual_epoch << std::endl;
+            }
+        } catch (const std::exception& e) {
+            std::cout << C_RED << "  [FAIL]" << C_RESET << " YMD -> Epoch. Threw an unexpected exception: " << e.what() << std::endl;
+        }
+
+        // --- Test 2: Instantiate with epoch and check Y-M-D string ---
+        try {
+            Date d_from_epoch(tc.expected_epoch);
+            std::stringstream ss;
+            ss << d_from_epoch;
+            std::string actual_ymd = ss.str();
+
+            std::stringstream expected_ss;
+            expected_ss << std::setfill('0') << std::setw(4) << tc.year << '-'
+                        << std::setfill('0') << std::setw(2) << tc.month << '-'
+                        << std::setfill('0') << std::setw(2) << tc.day;
+            std::string expected_ymd = expected_ss.str();
+
+            if (actual_ymd == expected_ymd) {
+                std::cout << C_GREEN << "  [PASS]" << C_RESET << " Epoch -> YMD. Correct date generated: " << actual_ymd << std::endl;
+                test2_passed = true;
+            } else {
+                std::cout << C_RED << "  [FAIL]" << C_RESET << " Epoch -> YMD. Expected " << expected_ymd << " but got " << actual_ymd << std::endl;
+            }
+        } catch (const std::exception& e) {
+            std::cout << C_RED << "  [FAIL]" << C_RESET << " Epoch -> YMD. Threw an unexpected exception: " << e.what() << std::endl;
+        }
+        
+        if (test1_passed) passed_count++;
+        if (test2_passed) passed_count++;
+    }
+
+    // --- Final Summary ---
+    std::cout << "\n-----------------------------------" << std::endl;
+    std::cout << C_BLUE << "Test Suite Finished." << C_RESET << std::endl;
+    if (passed_count == total_tests) {
+        std::cout << C_GREEN << "Summary: All " << total_tests << " tests passed!" << C_RESET << std::endl;
+    } else {
+        std::cout << C_RED << "Summary: " << passed_count << " / " << total_tests << " tests passed." << C_RESET << std::endl;
+    }
+}

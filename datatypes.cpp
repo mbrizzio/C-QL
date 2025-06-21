@@ -98,6 +98,51 @@ string SQLChar::getUnpaddedValue() const{
 ///////////////////////// End SQLChar //////////////////////////////////
 
 
+/////////////////////////// Date ///////////////////////////////////////
+
+bool Date::isLeapYear() const {
+  // The rule is: evey 4 years there is a leap years, multiples of 100 are skipped
+  // UNLESS they are multiples of 400
+  return (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0));
+}
+
+int Date::leapYearsSinceToday() const {
+  int leapYears = year / (int)4;
+
+  // Remove multiples of 100
+  leapYears -= year / (int)100;
+
+  // Add multiples of 400
+  leapYears += year / (int)400;
+
+  return leapYears;
+}
+
+void Date::enforceDateInvariants() const {
+  bool yearCheck = (year >= 0 && year <= 9999);
+  if (!yearCheck) {
+    cerr << "The year is not in the supported range" << endl;
+    exit(3);
+  }
+  
+  bool monthCheck = (month >= 0 && year <= 12);
+  if (!monthCheck){
+    cerr << "The month is not in the supported range" << endl;
+    exit(3);
+  }
+
+  bool dayCheck = (day <= daysPerMonth[month] + (month == 2) * isLeapYear());
+  if (!dayCheck){
+    cerr << "The day is too large for the specified month" << endl;
+    exit(3);
+  }
+
+  dayCheck = (day >= 0);
+  if (!dayCheck){
+    cerr << "The day cannot be negative" << endl;
+    exit(3);
+  }
+}
 
 /////////////////////// os operators (all classes) //////////////////////
 
