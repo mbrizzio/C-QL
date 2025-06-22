@@ -180,10 +180,12 @@ class Date {
     void enforceDateInvariants() const;
 
     bool isLeapYear() const;
+    bool isLeapYear(int const currentYear) const;
     
     // IMPORTANT: Does not consider the current year!
     // if year = 4, there have been 0 up to today
     int leapDaysUpToCurrentYear() const;
+    int leapDaysUpToCurrentYear(int const currentYear) const;
 
     // Takes the current epoch, and overwrites year, month, day
     // with what they should be

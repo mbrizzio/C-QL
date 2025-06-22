@@ -124,7 +124,6 @@ Date::Date(string &YearMonthDay){
   dateToEpoch();
 }
 
-
 void Date::dateToEpoch(){
   int updatedEpoch = 0;
 
@@ -146,51 +145,89 @@ void Date::dateToEpoch(){
   epoch = updatedEpoch;
 }
 
+// Fixed :)
 void Date::epochToDate(){
-  // First we generate the epoch from years
-  int naiveYears = (epoch / (int)365) + 1;
-  Date naiveYearAsDate = Date(naiveYears, 1, 1);
-  int naiveRemainder = epoch - naiveYears*365 - 
-                       naiveYearAsDate.leapDaysUpToCurrentYear() -
-                       naiveYearAsDate.isLeapYear(); // the final substraction could be buggy, think through!
-  
-  // Set year right away so we can make use of helpers.
-  year = naiveYears;
-  if (naiveRemainder <= 0) --year;
+  // Make a shitty loop and call it a day (for now)
+  year = 1;
+  int remainingDays = epoch;
 
-  int updatedRemainder = epoch - year*365 - leapDaysUpToCurrentYear();
+  while (remainingDays > 366){
+    remainingDays -= 365;
+    remainingDays -= isLeapYear();
 
-  // Create the month
-  month = 1;
-  while (updatedRemainder > 0){
-    if (isLeapYear() && month == 2) --updatedRemainder;
-    updatedRemainder -= daysPerMonth[month];
+    ++year;
+  }
+
+  // Hardcode a solution right on the border of current year and previous
+  // in case of a leap year.
+  if (remainingDays == 366){
+    if (isLeapYear()){
+      month = 12;
+      day = 31;
+    }
+    else{
+      ++year;
+      month = 1;
+      day = 1;
+    }
+
+    return;
+  }
+
+  // Hardcode solution when the remaining days are 0, which indicates
+  // the final day of the year
+  if (remainingDays == 0){
+    --year;
+    month = 12;
+    day = 31;
+
+    return;
+  }
+
+  // Normal case, go through the months 
+  month = 0;
+  while (remainingDays > daysPerMonth[month]){
+    remainingDays -= daysPerMonth[month];
+    remainingDays -= (isLeapYear() && (month == 1)); // 1 becuase 0 indexed for now
     ++month;
   }
-  --month;
-  updatedRemainder += daysPerMonth[month];
-  if (isLeapYear() && month == 2) ++updatedRemainder;
 
-  // The remainder represents the days of the month, so nothing left to do
-  day = updatedRemainder;
+  if (remainingDays == 0) { //this will only happen if we are in february on a leap year
+    day = 29;
+    month = 2;
+    return;
+  }
+
+  ++month;
+  day = remainingDays;
+
+}
+
+bool Date::isLeapYear(int const currentYear) const {
+  // The rule is: evey 4 years there is a leap years, multiples of 100 are skipped
+  // UNLESS they are multiples of 400
+  return (currentYear % 400 == 0 || 
+         (currentYear % 4 == 0 && currentYear % 100 != 0));
 }
 
 bool Date::isLeapYear() const {
-  // The rule is: evey 4 years there is a leap years, multiples of 100 are skipped
-  // UNLESS they are multiples of 400
-  return (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0));
+  return isLeapYear(year);
+}
+
+int Date::leapDaysUpToCurrentYear(int const currentYear) const {
+  int leapYears = (currentYear - 1) / (int)4;
+
+  // Remove multiples of 100
+  leapYears -= (currentYear - 1) / (int)100;
+
+  // Add multiples of 400
+  leapYears += (currentYear - 1) / (int)400;
+
+  return leapYears; 
 }
 
 int Date::leapDaysUpToCurrentYear() const {
-  int leapYears = (year - 1) / (int)4;
-
-  // Remove multiples of 100
-  leapYears -= (year - 1) / (int)100;
-
-  // Add multiples of 400
-  leapYears += (year - 1) / (int)400;
-
-  return leapYears;
+  return leapDaysUpToCurrentYear(year);
 }
 
 void Date::enforceDateInvariants() const {
@@ -423,7 +460,6 @@ bool SQLChar::operator>=(const string &rhs) const {
 } 
 
 
-
 ////// Varchar vs. SQLChar
 bool operator==(const Varchar &lhs, const SQLChar &rhs) {
   return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::equal_to<>{});
@@ -448,6 +484,7 @@ bool operator<=(const Varchar &lhs, const SQLChar &rhs) {
 bool operator>=(const Varchar &lhs, const SQLChar &rhs) {
   return rhs.comparatorHelper(lhs.value, rhs.getUnpaddedValue(), std::greater_equal<>{});
 }
+
 
 ////// SQLChar vs. Varchar
 bool operator==(const SQLChar &lhs, const Varchar &rhs) {
