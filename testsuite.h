@@ -389,3 +389,148 @@ void dateUnitTests() {
         std::cout << C_RED << "Summary: " << passed_count << " / " << total_tests << " tests passed." << C_RESET << std::endl;
     }
 }
+
+// Enum to define the expected relationship between two dates in a test case.
+enum class Relationship { EQUAL, LESS_THAN, GREATER_THAN };
+
+// A structure to hold all the information for a single comparison test case.
+struct ComparisonTestCase {
+    Date date1;
+    Date date2;
+    Relationship expected_relationship;
+    std::string description;
+};
+
+// --- Test Runner ---
+
+void dateComparisonTestSuite() {
+    std::cout << C_BLUE << "Starting Date comparator test suite..." << C_RESET << std::endl;
+    std::cout << "---------------------------------------" << std::endl;
+
+    const std::vector<ComparisonTestCase> testCases = {
+        { {2025, 6, 21}, {2025, 6, 21}, Relationship::EQUAL, "Two identical dates" },
+        { {2025, 6, 20}, {2025, 6, 21}, Relationship::LESS_THAN, "One day apart" },
+        { {2025, 6, 22}, {2025, 6, 21}, Relationship::GREATER_THAN, "One day apart (reversed)" },
+        { {2025, 2, 28}, {2025, 3, 1}, Relationship::LESS_THAN, "Crossing a month boundary" },
+        { {2024, 12, 31}, {2025, 1, 1}, Relationship::LESS_THAN, "Crossing a year boundary" },
+        { {2024, 2, 28}, {2024, 2, 29}, Relationship::LESS_THAN, "Crossing a leap day" },
+        { {2024, 2, 29}, {2024, 3, 1}, Relationship::LESS_THAN, "Leap day vs next day" },
+        { {1900, 2, 28}, {1900, 3, 1}, Relationship::LESS_THAN, "Century non-leap boundary" },
+        { {2000, 2, 29}, {2000, 3, 1}, Relationship::LESS_THAN, "Century leap boundary" },
+        { {1, 1, 1}, {9999, 12, 31}, Relationship::LESS_THAN, "Distant past vs distant future" }
+    };
+
+    int tests_run = 0;
+    int passed_count = 0;
+
+    for (const auto& tc : testCases) {
+        std::cout << C_YELLOW << "\nTesting Case: " << tc.description << C_RESET << std::endl;
+        
+        bool expected_eq, expected_ne, expected_lt, expected_gt, expected_le, expected_ge;
+
+        if (tc.expected_relationship == Relationship::EQUAL) {
+            expected_eq = true; expected_ne = false; expected_lt = false;
+            expected_gt = false; expected_le = true; expected_ge = true;
+        } else if (tc.expected_relationship == Relationship::LESS_THAN) {
+            expected_eq = false; expected_ne = true; expected_lt = true;
+            expected_gt = false; expected_le = true; expected_ge = false;
+        } else { // GREATER_THAN
+            expected_eq = false; expected_ne = true; expected_lt = false;
+            expected_gt = true; expected_le = false; expected_ge = true;
+        }
+
+        const auto run_check = [&](const std::string& op, bool actual, bool expected) {
+            tests_run++;
+            std::cout << "  " << std::setw(25) << std::left << (tc.description + " (" + op + ") ");
+            if (actual == expected) {
+                std::cout << C_GREEN << "[PASS]" << C_RESET << std::endl;
+                passed_count++;
+            } else {
+                std::cout << C_RED << "[FAIL]" << C_RESET << " -> Expected " << std::boolalpha << expected << ", got " << actual << std::endl;
+            }
+        };
+
+        run_check("==", tc.date1 == tc.date2, expected_eq);
+        run_check("!=", tc.date1 != tc.date2, expected_ne);
+        run_check("<",  tc.date1 <  tc.date2, expected_lt);
+        run_check(">",  tc.date1 >  tc.date2, expected_gt);
+        run_check("<=", tc.date1 <= tc.date2, expected_le);
+        run_check(">=", tc.date1 >= tc.date2, expected_ge);
+    }
+    
+    // --- Final Summary ---
+    std::cout << "\n---------------------------------------" << std::endl;
+    std::cout << C_BLUE << "Comparator Test Suite Finished." << C_RESET << std::endl;
+    if (passed_count == tests_run) {
+        std::cout << C_GREEN << "Summary: All " << tests_run << " comparator tests passed!" << C_RESET << std::endl;
+    } else {
+        std::cout << C_RED << "Summary: " << passed_count << " / " << tests_run << " tests passed." << C_RESET << std::endl;
+    }
+}
+
+struct ArithmeticTestCase {
+    std::string description;
+    std::function<Date()> test_function;
+    Date expected_date;
+};
+
+void dateArithmeticTestSuite() {
+    std::cout << C_BLUE << "Starting Date arithmetic test suite..." << C_RESET << std::endl;
+    std::cout << "--------------------------------------" << std::endl;
+
+    const std::vector<ArithmeticTestCase> testCases = {
+        // --- DAY Arithmetic ---
+        {"DAY: Add 10 days, no boundary", []{ return Date(2025, 6, 10).dateAdd(10, Components::DAYS); }, Date(2025, 6, 20)},
+        {"DAY: Subtract 10 days, cross year", []{ return Date(2025, 1, 5).dateSub(10, Components::DAYS); }, Date(2024, 12, 26)},
+        
+        // --- WEEK Arithmetic ---
+        {"WEEK: Add 2 weeks", []{ return Date(2025, 3, 1).dateAdd(2, Components::WEEKS); }, Date(2025, 3, 15)},
+        {"WEEK: Subtract 1 week across month", []{ return Date(2025, 3, 5).dateSub(1, Components::WEEKS); }, Date(2025, 2, 26)},
+
+        // --- MONTH Arithmetic ---
+        {"MONTH: Add 1 month, simple", []{ return Date(2025, 1, 15).dateAdd(1, Components::MONTHS); }, Date(2025, 2, 15)},
+        {"MONTH: Subtract 1 month, cross year", []{ return Date(2025, 1, 15).dateSub(1, Components::MONTHS); }, Date(2024, 12, 15)},
+        {"MONTH: Add 12 months (same as 1 year)", []{ return Date(2024, 2, 29).dateAdd(12, Components::MONTHS); }, Date(2025, 2, 28)},
+        {"MONTH: [EDGE] Add 1 month to Jan 31", []{ return Date(2025, 1, 31).dateAdd(1, Components::MONTHS); }, Date(2025, 2, 28)},
+        {"MONTH: [EDGE] Add 1 month to Jan 31 (leap)", []{ return Date(2024, 1, 31).dateAdd(1, Components::MONTHS); }, Date(2024, 2, 29)},
+        {"MONTH: [EDGE] Subtract 1 month from Mar 31", []{ return Date(2025, 3, 31).dateSub(1, Components::MONTHS); }, Date(2025, 2, 28)},
+        
+        // --- QUARTER Arithmetic ---
+        {"QUARTER: Add 1 quarter (3 months)", []{ return Date(2025, 1, 31).dateAdd(1, Components::QUARTERS); }, Date(2025, 4, 30)},
+        {"QUARTER: Subtract 1 quarter, cross year", []{ return Date(2025, 2, 28).dateSub(1, Components::QUARTERS); }, Date(2024, 11, 28)},
+        {"QUARTER: [EDGE] Add 1 Q to Oct 31 (leap)", []{ return Date(2023, 10, 31).dateAdd(1, Components::QUARTERS); }, Date(2024, 1, 31)},
+        {"QUARTER: [EDGE] Add 1 Q to Nov 30 (leap)", []{ return Date(2023, 11, 30).dateAdd(1, Components::QUARTERS); }, Date(2024, 2, 29)},
+
+        // --- YEAR Arithmetic ---
+        {"YEAR: Add 5 years, simple", []{ return Date(2025, 6, 21).dateAdd(5, Components::YEARS); }, Date(2030, 6, 21)},
+        {"YEAR: [EDGE] Add 1 year to leap day", []{ return Date(2024, 2, 29).dateAdd(1, Components::YEARS); }, Date(2025, 2, 28)},
+        {"YEAR: [EDGE] Add 4 years to leap day", []{ return Date(2024, 2, 29).dateAdd(4, Components::YEARS); }, Date(2028, 2, 29)},
+        {"YEAR: [EDGE] Non-leap century boundary", []{ return Date(1899, 5, 5).dateAdd(1, Components::YEARS); }, Date(1900, 5, 5)},
+        {"YEAR: [EDGE] Leap century boundary", []{ return Date(1999, 2, 1).dateAdd(1, Components::YEARS); }, Date(2000, 2, 1)},
+    };
+
+    int passed_count = 0;
+    for (const auto& tc : testCases) {
+        std::cout << C_YELLOW << "Testing: " << std::left << std::setw(40) << tc.description << C_RESET;
+        try {
+            Date result = tc.test_function();
+            if (result == tc.expected_date) {
+                std::cout << C_GREEN << "[PASS]" << C_RESET << " -> Got " << result << std::endl;
+                passed_count++;
+            } else {
+                std::cout << C_RED << "[FAIL]" << C_RESET << " -> Expected " << tc.expected_date << ", but got " << result << std::endl;
+            }
+        } catch (const std::exception& e) {
+            std::cout << C_RED << "[FAIL]" << C_RESET << " -> Threw an unexpected exception: " << e.what() << std::endl;
+        }
+    }
+    
+    // --- Final Summary ---
+    std::cout << "\n--------------------------------------" << std::endl;
+    std::cout << C_BLUE << "Arithmetic Test Suite Finished." << C_RESET << std::endl;
+    if (passed_count == testCases.size()) {
+        std::cout << C_GREEN << "Summary: All " << testCases.size() << " tests passed!" << C_RESET << std::endl;
+    } else {
+        std::cout << C_RED << "Summary: " << passed_count << " / " << testCases.size() << " tests passed." << C_RESET << std::endl;
+    }
+}

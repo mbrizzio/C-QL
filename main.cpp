@@ -5,41 +5,44 @@
 using namespace std;
 
 int main(){
-  Table table;
+  // Table table;
 
-  table.insertColumn("test", "INTEGER");
-  table.insertColumn("Name", "TEXT");
+  // table.insertColumn("test", "INTEGER");
+  // table.insertColumn("Name", "TEXT");
   
-  Row toAdd;
-  toAdd["test"] = 1;
-  table.insertRow(toAdd);
+  // Row toAdd;
+  // toAdd["test"] = 1;
+  // table.insertRow(toAdd);
 
-  toAdd["Name"] = "heh";
-  table.insertRow(toAdd);
+  // toAdd["Name"] = "heh";
+  // table.insertRow(toAdd);
 
-  table.insertColumn("variableCharacter", "VARCHAR", 10);
-  Row empty;
-  table.insertRow(empty);
+  // table.insertColumn("variableCharacter", "VARCHAR", 10);
+  // Row empty;
+  // table.insertRow(empty);
 
-  Varchar v(&table, "variableCharacter", "exactlyTen");
-  empty["variableCharacter"] = v;
-  table.insertRow(empty);
+  // Varchar v(&table, "variableCharacter", "exactlyTen");
+  // empty["variableCharacter"] = v;
+  // table.insertRow(empty);
 
-  Varchar d(10, "lesser");
-  empty["variableCharacter"] = d;
-  table.insertRow(empty);
+  // Varchar d(10, "lesser");
+  // empty["variableCharacter"] = d;
+  // table.insertRow(empty);
 
-  table.insertColumn("setchar", "CHAR", 10);
+  // table.insertColumn("setchar", "CHAR", 10);
 
-  SQLChar c(10, "lesser");
+  // SQLChar c(10, "lesser");
 
-  toAdd["setchar"] = c;
-  table.insertRow(toAdd);
+  // toAdd["setchar"] = c;
+  // table.insertRow(toAdd);
   
-  table.print();
+  // table.print();
 
-  varcharComparatorCorrectnessTests();
-  charComparatorCorrectnessTests();
-  runTypesComparisonTests();
-  dateUnitTests();
+  // varcharComparatorCorrectnessTests();
+  // charComparatorCorrectnessTests();
+  // runTypesComparisonTests();
+  // dateUnitTests();
+  dateComparisonTestSuite();
+
+  dateArithmeticTestSuite();
 }

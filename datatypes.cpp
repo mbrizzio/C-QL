@@ -3,6 +3,7 @@
 #include "table.h"
 
 /////////////////////////////////// Varchar /////////////////////////////
+
 Varchar::Varchar() {
   length = 100;
   value = "";
@@ -99,6 +100,7 @@ string SQLChar::getUnpaddedValue() const{
 
 
 /////////////////////////// Date ///////////////////////////////////////
+
 Date::Date(const int Year, const int Month, const int Day) :
           year(Year), month(Month), day(Day) {
   enforceDateInvariants();
@@ -256,6 +258,79 @@ void Date::enforceDateInvariants() const {
   }
 }
 
+Date Date::dateAdd(int difference, const Components mode) const {
+  Date newDate(1);
+  switch (mode) {
+    // Looking for it to fall through to days since the logic is the same
+    // But we have 7 days instead of 1
+    case Components::WEEKS:
+      difference *= 7;
+
+    case Components::DAYS: {
+      int newEpoch = epoch + difference;
+
+      Date newDateDays(newEpoch);
+
+      newDate = newDateDays; 
+
+      break;
+    }
+    
+    // Looking for it to fall through to months since the logic is the same
+    // but we have 3 months instead of 1
+    case Components::QUARTERS:
+      difference *= 3;
+
+    case Components::MONTHS: {
+      Date newDateMonths(year, month, day);
+      // Step 1: deal with years and months
+      // Deal with this tomorrow
+      int leftover = difference % 12;
+      if (leftover >= month){
+        newDateMonths.month = 12 - (leftover - month);
+        --newDateMonths.year;
+      }
+      else{
+        newDateMonths.month = month - leftover;
+      }
+
+      newDateMonths.year -= difference / (int)12;
+
+      // Step 2: deal with the day
+      int maxDay = daysPerMonth[month - 1];
+      maxDay += ((month == 2) && newDateMonths.isLeapYear());
+
+      newDateMonths.day = min(day, maxDay);
+
+      newDate = newDateMonths;
+      newDate.dateToEpoch();
+
+      break;
+    }
+    
+    case Components::YEARS: {
+      Date newDateYears(year, month, day);
+
+      newDateYears.year += difference;
+
+      if ( (month == 2 && day == 29) && !newDateYears.isLeapYear() ) {
+        newDateYears.day = 28;
+      }
+      
+      newDate = newDateYears;
+      newDate.dateToEpoch();
+
+      break;
+    }
+  }  
+
+  return newDate;
+}
+
+Date Date::dateSub(const int rhs, const Components mode) const {
+  return dateAdd(-rhs, mode);
+}
+
 //////////////////////// End Date ///////////////////////////////////////
 
 
@@ -274,11 +349,13 @@ ostream& operator<<(ostream& os, const SQLChar& self){
   return os;
 }
 
+// BUGGY, zeroes appear in the wrong side. how to fix?
 ostream& operator<<(ostream& os, const Date& self){
+  char oldFill = os.fill();
   os << setfill('0') << setw(4) << self.year << '-';
   os << setfill('0') << setw(2) << self.month << '-';
   os << setfill('0') << setw(2) << self.day;
-
+  os.fill(oldFill);
   return os;
 }
 
@@ -302,7 +379,65 @@ ostream& operator<<(ostream& os, const Types& self){
 
 }
 
+////// Arithmetic operators (all classes)
+
+Date Date::operator+(const Date &rhs) const {
+  return Date(epoch + rhs.epoch);
+}
+
+Date Date::operator-(const Date &rhs) const {
+  return Date(epoch - rhs.epoch);
+}
+
+void Date::operator-=(const Date &rhs) {
+  epoch -= rhs.epoch;
+  epochToDate();
+  enforceDateInvariants();
+}
+
+void Date::operator+=(const Date &rhs) {
+  epoch += rhs.epoch;
+  epochToDate();
+  enforceDateInvariants();
+}
+
+////// Explicit class conversion (all classes)
+
+Date::operator int() const {
+  return epoch;
+}
+
+/////////////////////// Misc operators end //////////////////////////////
+
+
+
 /////////////////////// Comparator hell (all classes) ///////////////////
+
+////// Date vs. Date
+bool Date::operator==(const Date &rhs) const {
+  return epoch == rhs.epoch;
+}
+
+bool Date::operator!=(const Date &rhs) const {
+  return epoch != rhs.epoch;
+}
+
+bool Date::operator<(const Date &rhs) const {
+  return epoch < rhs.epoch;
+}
+
+bool Date::operator>(const Date &rhs) const {
+  return epoch > rhs.epoch;
+}
+
+bool Date::operator<=(const Date &rhs) const {
+  return epoch <= rhs.epoch;
+}
+
+bool Date::operator>=(const Date &rhs) const {
+  return epoch >= rhs.epoch;
+}
+
 
 ////// Varchar vs. Varchar
 bool Varchar::operator==(const Varchar &rhs) const {

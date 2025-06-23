@@ -136,10 +136,12 @@ class SQLChar : public Varchar {
 constexpr array<int, 12> daysPerMonth = 
           {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-enum Components{
+enum class Components{
   DAYS,
   MONTHS, 
-  YEARS
+  YEARS,
+  WEEKS,
+  QUARTERS
 };
 
 class Date {
@@ -159,17 +161,19 @@ class Date {
     bool operator<=(const Date &rhs) const;
     bool operator>=(const Date &rhs) const;
 
-    bool operator-(const Date &rhs) const;
-    bool operator+(const Date &rhs) const;
-    bool operator-=(const Date &rhs);
-    bool operator+=(const Date &rhs);
+    Date operator-(const Date &rhs) const;
+    Date operator+(const Date &rhs) const;
+    void operator-=(const Date &rhs);
+    void operator+=(const Date &rhs);
+
+    //Date& operator=(const Date &rhs);
 
     explicit operator int() const;
 
     friend ostream& operator<<(ostream& os, const Date& self);
 
-    Date dateAdd(const int rhs, const Components mode);
-    Date dateSub(const int rhs, const Components mode);
+    Date dateAdd(int difference, const Components mode) const;
+    Date dateSub(int difference, const Components mode) const;
 
     int day;
     int month;
