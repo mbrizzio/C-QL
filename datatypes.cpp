@@ -286,19 +286,23 @@ Date Date::dateAdd(int difference, const Components mode) const {
       // Step 1: deal with years and months
       // Deal with this tomorrow
       int leftover = difference % 12;
-      if (leftover >= month){
-        newDateMonths.month = 12 - (leftover - month);
-        --newDateMonths.year;
+      if (leftover + month > 12){
+        ++newDateMonths.year;
+        newDateMonths.month = ((leftover + month) % 12);
       }
-      else{
-        newDateMonths.month = month - leftover;
+      else if (leftover + month <= 0) {
+        --newDateMonths.year;
+        newDateMonths.month = 12 + (month + leftover);
+      }
+      else {
+        newDateMonths.month += leftover;
       }
 
-      newDateMonths.year -= difference / (int)12;
+      newDateMonths.year += difference / (int)12;
 
       // Step 2: deal with the day
-      int maxDay = daysPerMonth[month - 1];
-      maxDay += ((month == 2) && newDateMonths.isLeapYear());
+      int maxDay = daysPerMonth[newDateMonths.month - 1];
+      maxDay += ((newDateMonths.month == 2) && newDateMonths.isLeapYear());
 
       newDateMonths.day = min(day, maxDay);
 

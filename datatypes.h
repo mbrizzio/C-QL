@@ -250,6 +250,7 @@ using Types = variant<
   string,     //TEXT
   Varchar,    //VARCHAR
   SQLChar,    //CHAR
+  Date,       //DATE 
   monostate   //NULL
 >;
 
