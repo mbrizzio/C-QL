@@ -258,15 +258,15 @@ void Date::enforceDateInvariants() const {
   }
 }
 
-Date Date::dateAdd(int difference, const Components mode) const {
+Date Date::dateAdd(int difference, const DateComponents mode) const {
   Date newDate(1);
   switch (mode) {
     // Looking for it to fall through to days since the logic is the same
     // But we have 7 days instead of 1
-    case Components::WEEKS:
+    case DateComponents::WEEKS:
       difference *= 7;
 
-    case Components::DAYS: {
+    case DateComponents::DAYS: {
       int newEpoch = epoch + difference;
 
       Date newDateDays(newEpoch);
@@ -278,10 +278,10 @@ Date Date::dateAdd(int difference, const Components mode) const {
     
     // Looking for it to fall through to months since the logic is the same
     // but we have 3 months instead of 1
-    case Components::QUARTERS:
+    case DateComponents::QUARTERS:
       difference *= 3;
 
-    case Components::MONTHS: {
+    case DateComponents::MONTHS: {
       Date newDateMonths(year, month, day);
       // Step 1: deal with years and months
       // Deal with this tomorrow
@@ -312,7 +312,7 @@ Date Date::dateAdd(int difference, const Components mode) const {
       break;
     }
     
-    case Components::YEARS: {
+    case DateComponents::YEARS: {
       Date newDateYears(year, month, day);
 
       newDateYears.year += difference;
@@ -331,8 +331,52 @@ Date Date::dateAdd(int difference, const Components mode) const {
   return newDate;
 }
 
-Date Date::dateSub(const int rhs, const Components mode) const {
+Date Date::dateSub(const int rhs, const DateComponents mode) const {
   return dateAdd(-rhs, mode);
+}
+
+int Date::extract(const DateComponents mode) const {
+  int value = 0;
+
+  switch (mode){
+    case DateComponents::DAYS: {
+      value = day;
+
+      break;
+    }
+
+    case DateComponents::MONTHS: {
+      value = month;
+
+      break;
+    }
+
+    case DateComponents::QUARTERS: {
+      value = ((month - 1) / (int)3) + 1;
+
+      break;
+    }
+
+    case DateComponents::YEARS: {
+      value = year;
+
+      break;
+    }
+
+    case DateComponents::DAYOFYEAR: {
+      for (int i = 0; i < month; ++i){
+        value += daysPerMonth[i];
+      }
+      value += ((month > 2) && isLeapYear());
+
+      value += day;
+
+      break;
+    }
+
+  }
+
+  return value;
 }
 
 //////////////////////// End Date ///////////////////////////////////////

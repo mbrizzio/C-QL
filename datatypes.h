@@ -136,12 +136,13 @@ class SQLChar : public Varchar {
 constexpr array<int, 12> daysPerMonth = 
           {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-enum class Components{
+enum class DateComponents{
   DAYS,
   MONTHS, 
   YEARS,
   WEEKS,
-  QUARTERS
+  QUARTERS, 
+  DAYOFYEAR
 };
 
 class Date {
@@ -172,8 +173,10 @@ class Date {
 
     friend ostream& operator<<(ostream& os, const Date& self);
 
-    Date dateAdd(int difference, const Components mode) const;
-    Date dateSub(int difference, const Components mode) const;
+    Date dateAdd(int difference, const DateComponents mode) const;
+    Date dateSub(int difference, const DateComponents mode) const;
+
+    int extract(const DateComponents mode) const;
 
     int day;
     int month;
@@ -199,6 +202,55 @@ class Date {
     // the epoch should be
     void dateToEpoch();
 };
+
+Date getCurrentDate();
+
+enum class TimeComponents {
+  FRACTIONS,
+  SECONDS,
+  MINUTES,
+  HOURS
+};
+
+class Time {
+  public:
+    Time();
+    Time(int Precision);
+
+    Time(const string &HHMMSS);
+    Time(const string &HHMMSS, int Precision);
+
+    Time(int Hour, int Minute, int Second);
+    Time(int Hour, int Minute, int Second, int Precision);
+
+    bool operator==(const Time &rhs) const;
+    bool operator!=(const Time &rhs) const;
+    bool operator<(const Time &rhs) const;
+    bool operator>(const Time &rhs) const;
+    bool operator<=(const Time &rhs) const;
+    bool operator>=(const Time &rhs) const;
+
+    friend ostream& operator<<(ostream& os, const Time &self);
+
+    Time timeAdd(int difference, const TimeComponents mode) const;
+    Time timeSub(int difference, const TimeComponents mode) const;
+    Time timeDiff(const Time &rhs);
+
+    int extract(const TimeComponents mode) const;
+    int fractionPrecision;
+
+    int fractionOfSecond;
+    int second;
+    int minute;
+    int hour;
+    int duration; // sum of seconds 
+  
+  private:
+
+  void enforceTimeInvariants();
+};
+
+Time getCurrentTime();
 
 // Defining a type trait for string-like classes
 template <typename T>
