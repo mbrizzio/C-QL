@@ -480,33 +480,33 @@ void dateArithmeticTestSuite() {
 
     const std::vector<ArithmeticTestCase> testCases = {
         // --- DAY Arithmetic ---
-        {"DAY: Add 10 days, no boundary", []{ return Date(2025, 6, 10).dateAdd(10, Components::DAYS); }, Date(2025, 6, 20)},
-        {"DAY: Subtract 10 days, cross year", []{ return Date(2025, 1, 5).dateSub(10, Components::DAYS); }, Date(2024, 12, 26)},
+        {"DAY: Add 10 days, no boundary", []{ return Date(2025, 6, 10).dateAdd(10, DateComponents::DAYS); }, Date(2025, 6, 20)},
+        {"DAY: Subtract 10 days, cross year", []{ return Date(2025, 1, 5).dateSub(10, DateComponents::DAYS); }, Date(2024, 12, 26)},
         
         // --- WEEK Arithmetic ---
-        {"WEEK: Add 2 weeks", []{ return Date(2025, 3, 1).dateAdd(2, Components::WEEKS); }, Date(2025, 3, 15)},
-        {"WEEK: Subtract 1 week across month", []{ return Date(2025, 3, 5).dateSub(1, Components::WEEKS); }, Date(2025, 2, 26)},
+        {"WEEK: Add 2 weeks", []{ return Date(2025, 3, 1).dateAdd(2, DateComponents::WEEKS); }, Date(2025, 3, 15)},
+        {"WEEK: Subtract 1 week across month", []{ return Date(2025, 3, 5).dateSub(1, DateComponents::WEEKS); }, Date(2025, 2, 26)},
 
         // --- MONTH Arithmetic ---
-        {"MONTH: Add 1 month, simple", []{ return Date(2025, 1, 15).dateAdd(1, Components::MONTHS); }, Date(2025, 2, 15)},
-        {"MONTH: Subtract 1 month, cross year", []{ return Date(2025, 1, 15).dateSub(1, Components::MONTHS); }, Date(2024, 12, 15)},
-        {"MONTH: Add 12 months (same as 1 year)", []{ return Date(2024, 2, 29).dateAdd(12, Components::MONTHS); }, Date(2025, 2, 28)},
-        {"MONTH: [EDGE] Add 1 month to Jan 31", []{ return Date(2025, 1, 31).dateAdd(1, Components::MONTHS); }, Date(2025, 2, 28)},
-        {"MONTH: [EDGE] Add 1 month to Jan 31 (leap)", []{ return Date(2024, 1, 31).dateAdd(1, Components::MONTHS); }, Date(2024, 2, 29)},
-        {"MONTH: [EDGE] Subtract 1 month from Mar 31", []{ return Date(2025, 3, 31).dateSub(1, Components::MONTHS); }, Date(2025, 2, 28)},
+        {"MONTH: Add 1 month, simple", []{ return Date(2025, 1, 15).dateAdd(1, DateComponents::MONTHS); }, Date(2025, 2, 15)},
+        {"MONTH: Subtract 1 month, cross year", []{ return Date(2025, 1, 15).dateSub(1, DateComponents::MONTHS); }, Date(2024, 12, 15)},
+        {"MONTH: Add 12 months (same as 1 year)", []{ return Date(2024, 2, 29).dateAdd(12, DateComponents::MONTHS); }, Date(2025, 2, 28)},
+        {"MONTH: [EDGE] Add 1 month to Jan 31", []{ return Date(2025, 1, 31).dateAdd(1, DateComponents::MONTHS); }, Date(2025, 2, 28)},
+        {"MONTH: [EDGE] Add 1 month to Jan 31 (leap)", []{ return Date(2024, 1, 31).dateAdd(1, DateComponents::MONTHS); }, Date(2024, 2, 29)},
+        {"MONTH: [EDGE] Subtract 1 month from Mar 31", []{ return Date(2025, 3, 31).dateSub(1, DateComponents::MONTHS); }, Date(2025, 2, 28)},
         
         // --- QUARTER Arithmetic ---
-        {"QUARTER: Add 1 quarter (3 months)", []{ return Date(2025, 1, 31).dateAdd(1, Components::QUARTERS); }, Date(2025, 4, 30)},
-        {"QUARTER: Subtract 1 quarter, cross year", []{ return Date(2025, 2, 28).dateSub(1, Components::QUARTERS); }, Date(2024, 11, 28)},
-        {"QUARTER: [EDGE] Add 1 Q to Oct 31 (leap)", []{ return Date(2023, 10, 31).dateAdd(1, Components::QUARTERS); }, Date(2024, 1, 31)},
-        {"QUARTER: [EDGE] Add 1 Q to Nov 30 (leap)", []{ return Date(2023, 11, 30).dateAdd(1, Components::QUARTERS); }, Date(2024, 2, 29)},
+        {"QUARTER: Add 1 quarter (3 months)", []{ return Date(2025, 1, 31).dateAdd(1, DateComponents::QUARTERS); }, Date(2025, 4, 30)},
+        {"QUARTER: Subtract 1 quarter, cross year", []{ return Date(2025, 2, 28).dateSub(1, DateComponents::QUARTERS); }, Date(2024, 11, 28)},
+        {"QUARTER: [EDGE] Add 1 Q to Oct 31 (leap)", []{ return Date(2023, 10, 31).dateAdd(1, DateComponents::QUARTERS); }, Date(2024, 1, 31)},
+        {"QUARTER: [EDGE] Add 1 Q to Nov 30 (leap)", []{ return Date(2023, 11, 30).dateAdd(1, DateComponents::QUARTERS); }, Date(2024, 2, 29)},
 
         // --- YEAR Arithmetic ---
-        {"YEAR: Add 5 years, simple", []{ return Date(2025, 6, 21).dateAdd(5, Components::YEARS); }, Date(2030, 6, 21)},
-        {"YEAR: [EDGE] Add 1 year to leap day", []{ return Date(2024, 2, 29).dateAdd(1, Components::YEARS); }, Date(2025, 2, 28)},
-        {"YEAR: [EDGE] Add 4 years to leap day", []{ return Date(2024, 2, 29).dateAdd(4, Components::YEARS); }, Date(2028, 2, 29)},
-        {"YEAR: [EDGE] Non-leap century boundary", []{ return Date(1899, 5, 5).dateAdd(1, Components::YEARS); }, Date(1900, 5, 5)},
-        {"YEAR: [EDGE] Leap century boundary", []{ return Date(1999, 2, 1).dateAdd(1, Components::YEARS); }, Date(2000, 2, 1)},
+        {"YEAR: Add 5 years, simple", []{ return Date(2025, 6, 21).dateAdd(5, DateComponents::YEARS); }, Date(2030, 6, 21)},
+        {"YEAR: [EDGE] Add 1 year to leap day", []{ return Date(2024, 2, 29).dateAdd(1, DateComponents::YEARS); }, Date(2025, 2, 28)},
+        {"YEAR: [EDGE] Add 4 years to leap day", []{ return Date(2024, 2, 29).dateAdd(4, DateComponents::YEARS); }, Date(2028, 2, 29)},
+        {"YEAR: [EDGE] Non-leap century boundary", []{ return Date(1899, 5, 5).dateAdd(1, DateComponents::YEARS); }, Date(1900, 5, 5)},
+        {"YEAR: [EDGE] Leap century boundary", []{ return Date(1999, 2, 1).dateAdd(1, DateComponents::YEARS); }, Date(2000, 2, 1)},
     };
 
     int passed_count = 0;

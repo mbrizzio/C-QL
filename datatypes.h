@@ -8,6 +8,7 @@
 #include <compare>
 #include <iomanip>
 #include <type_traits>
+#include <cmath>
 
 using namespace std;
 
@@ -167,8 +168,6 @@ class Date {
     void operator-=(const Date &rhs);
     void operator+=(const Date &rhs);
 
-    //Date& operator=(const Date &rhs);
-
     explicit operator int() const;
 
     friend ostream& operator<<(ostream& os, const Date& self);
@@ -181,9 +180,11 @@ class Date {
     int day;
     int month;
     int year;
-    int epoch; // Days since start = 0001-01-01
 
+    int epoch; // Days since start = 0001-01-01
+    
   private:
+    
     void enforceDateInvariants() const;
 
     bool isLeapYear() const;
@@ -217,11 +218,11 @@ class Time {
     Time();
     Time(int Precision);
 
-    Time(const string &HHMMSS);
-    Time(const string &HHMMSS, int Precision);
+    Time(double Duration, int Precision=6);
 
-    Time(int Hour, int Minute, int Second);
-    Time(int Hour, int Minute, int Second, int Precision);
+    Time(const string &HHMMSS, int Precision=6);
+
+    Time(int Hour, int Minute, int Second, int Fraction=0, int Precision=6);
 
     bool operator==(const Time &rhs) const;
     bool operator!=(const Time &rhs) const;
@@ -234,20 +235,27 @@ class Time {
 
     Time timeAdd(int difference, const TimeComponents mode) const;
     Time timeSub(int difference, const TimeComponents mode) const;
+
+    // returns absolute value difference, since negative time is not supported
     Time timeDiff(const Time &rhs);
 
-    int extract(const TimeComponents mode) const;
-    int fractionPrecision;
+    double extract(const TimeComponents mode) const;
 
-    int fractionOfSecond;
-    int second;
-    int minute;
-    int hour;
-    int duration; // sum of seconds 
-  
+    u_int precision = 0;
+
+    u_int fraction = 0;
+    u_int second;
+    u_int minute;
+    u_int hour;
+
+    double duration;
+
   private:
+    void enforceTimeInvariants();
 
-  void enforceTimeInvariants();
+    void timeToDuration();
+
+    void durationToTime();
 };
 
 Time getCurrentTime();
@@ -303,6 +311,7 @@ using Types = variant<
   Varchar,    //VARCHAR
   SQLChar,    //CHAR
   Date,       //DATE 
+  Time,       //TIME  
   monostate   //NULL
 >;
 

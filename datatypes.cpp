@@ -47,6 +47,7 @@ void Varchar::enforceLengthInvariant(){
 string Varchar::getValue() const {
   return value;
 }
+
 /////////////////////////////// End Varchar //////////////////////////////
 
 
@@ -96,6 +97,7 @@ string SQLChar::getUnpaddedValue() const{
 
   return string(begin, ++end);
 }
+
 ///////////////////////// End SQLChar //////////////////////////////////
 
 
@@ -341,25 +343,21 @@ int Date::extract(const DateComponents mode) const {
   switch (mode){
     case DateComponents::DAYS: {
       value = day;
-
       break;
     }
 
     case DateComponents::MONTHS: {
       value = month;
-
       break;
     }
 
     case DateComponents::QUARTERS: {
       value = ((month - 1) / (int)3) + 1;
-
       break;
     }
 
     case DateComponents::YEARS: {
       value = year;
-
       break;
     }
 
@@ -370,7 +368,6 @@ int Date::extract(const DateComponents mode) const {
       value += ((month > 2) && isLeapYear());
 
       value += day;
-
       break;
     }
 
@@ -380,6 +377,150 @@ int Date::extract(const DateComponents mode) const {
 }
 
 //////////////////////// End Date ///////////////////////////////////////
+
+
+
+//////////////////////////// Time ////////////////////////////////////////
+
+Time::Time(int Precision) : second(0), minute(0), hour(0), duration(0), 
+                            precision(Precision) {}
+
+Time::Time() : Time(0) {}
+
+Time::Time(double Duration, int Precision=0) : duration(Duration), precision(Precision) {
+  durationToTime();
+  enforceTimeInvariants();
+}
+
+
+// Only guaranteed to work if string format is H[H]:M[M]:S[S][.DDDDDD]
+Time::Time(const string &HHMMSS, int Precision) : precision(Precision) {
+  auto firstColon = find(HHMMSS.begin(), HHMMSS.end(), ':');
+  hour = stoi(string(HHMMSS.begin(), firstColon));
+
+  auto secondColon = find(firstColon+1, HHMMSS.end(), ':');
+  minute = stoi(string(firstColon+1, secondColon));
+
+  double fullSecond = stod(string(secondColon+1, HHMMSS.end()));
+  second = (int)fullSecond;
+
+  fraction = (int)((fullSecond - (double)second) * pow(10, precision)) % 1;
+    
+  timeToDuration();
+  enforceTimeInvariants();
+}
+
+Time::Time(int Hour, int Minute, int Second, int Fraction=0, int Precision=0) :
+           hour(Hour), minute(Minute), second(Second), precision(Precision) {
+  fraction = second % (int)pow(10, Precision);
+
+  timeToDuration();
+  enforceTimeInvariants();
+}
+
+double Time::extract(const TimeComponents mode) const {
+  double element = 0;
+
+  switch (mode){
+    case TimeComponents::FRACTIONS: {
+      // 6 decimal precision is supported. This scheme lets us compare the
+      // fractions of 2 numbers with different decimal precision easily
+      element = fraction * (int)pow(10, 6 - precision); 
+      break;
+    }
+    case TimeComponents::SECONDS: {
+      element = second;
+      break;
+    }
+    case TimeComponents::MINUTES: {
+      element = minute;
+      break;
+    }
+    case TimeComponents::HOURS: {
+      element = hour;
+      break;
+    }
+  }
+
+  return element;
+}
+
+Time Time::timeAdd(int difference, const TimeComponents mode) const {
+  double updatedDuration = duration;
+
+  switch (mode) {
+    // Assume the user is responsibly adding the decimal component
+    case TimeComponents::FRACTIONS: {
+      updatedDuration += (difference / pow(10, precision));
+      break;
+    }
+    case TimeComponents::SECONDS: {
+      updatedDuration += difference;
+      break;
+    }
+    case TimeComponents::MINUTES: {
+      updatedDuration += difference * 60;
+    } 
+    case TimeComponents::HOURS: {
+      updatedDuration += difference * 3600;
+    }
+  }
+
+  return Time((double)updatedDuration, precision);
+}
+
+Time Time::timeSub(int difference, const TimeComponents mode) const {
+  return timeAdd(-difference, mode);
+}
+
+Time Time::timeDiff(const Time &rhs) {
+  return Time((double)abs(duration - rhs.duration));
+}
+
+void Time::timeToDuration() {
+  duration = hour * 3600 + minute * 60 + second;
+
+  if (precision > 0) duration += fraction / (int)pow(10, precision);
+}
+
+void Time::durationToTime() {
+  double witheredDuration = duration;
+
+  hour = (u_int)(witheredDuration / 3600);
+  witheredDuration -= hour * 3600;
+
+  minute = (u_int)(witheredDuration / 60);
+  witheredDuration -= hour * 60;
+
+  second = (u_int)(witheredDuration / 1);
+  witheredDuration -= minute * 1;
+
+  fraction = witheredDuration;
+}
+
+void Time::enforceTimeInvariants() {
+  if (second > 60){
+    cerr << "Invalid second inputted to Time" << endl;
+    exit(3);
+  }
+  if (minute > 60){
+    cerr << "Invalid minute inputted to Time" << endl;
+    exit(3);
+  }
+  if (hour > 24){
+    cerr << "Invalid hour inputted to Time" << endl;
+    exit(3);
+  }
+  if (fraction > (u_int)pow(10, precision)) {
+    cerr << "Fraction is wrong somehow" << endl;
+    exit(3);
+  }
+  if (precision > 6) {
+    cerr << "Only up to 6 digits of decimal precision supported" << endl;
+  }
+}
+
+////////////////////////// End Time ///////////////////////////////////////
 
 
 
@@ -400,10 +541,26 @@ ostream& operator<<(ostream& os, const SQLChar& self){
 // BUGGY, zeroes appear in the wrong side. how to fix?
 ostream& operator<<(ostream& os, const Date& self){
   char oldFill = os.fill();
+
   os << setfill('0') << setw(4) << self.year << '-';
   os << setfill('0') << setw(2) << self.month << '-';
   os << setfill('0') << setw(2) << self.day;
+
   os.fill(oldFill);
+  
+  return os;
+}
+
+ostream& operator<<(ostream& os, const Time &self){
+  char oldFill = os.fill();
+
+  os << setfill('0') << setw(2) << self.hour << ':';
+  os << setfill('0') << setw(2) << self.minute << ':';
+  os << setfill('0') << setw(2) << self.second;
+  if (self.precision > 0) os << setfill('0') << setw(self.precision) << self.fraction;
+  
+  os.fill(oldFill);
+
   return os;
 }
 
@@ -460,6 +617,31 @@ Date::operator int() const {
 
 
 /////////////////////// Comparator hell (all classes) ///////////////////
+
+////// Time vs. Time
+bool Time::operator==(const Time &rhs) const {
+  return duration == rhs.duration;
+}
+
+bool Time::operator!=(const Time &rhs) const {
+  return duration != rhs.duration;
+}
+
+bool Time::operator<(const Time &rhs) const {
+  return duration < rhs.duration;
+}
+
+bool Time::operator>(const Time &rhs) const {
+  return duration > rhs.duration;
+}
+
+bool Time::operator<=(const Time &rhs) const {
+  return duration <= rhs.duration;
+}
+
+bool Time::operator>=(const Time &rhs) const {
+  return duration >= rhs.duration;
+}
 
 ////// Date vs. Date
 bool Date::operator==(const Date &rhs) const {
