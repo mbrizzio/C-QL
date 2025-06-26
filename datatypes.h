@@ -250,6 +250,13 @@ class Time {
 
     double duration;
 
+    // NOTE: to delete later
+    string toString() const {
+            stringstream ss;
+            ss << *this;
+            return ss.str();
+        }
+
   private:
     void enforceTimeInvariants();
 

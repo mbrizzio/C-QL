@@ -45,4 +45,6 @@ int main(){
   dateComparisonTestSuite();
 
   dateArithmeticTestSuite();
+
+  timeTestCases();
 }

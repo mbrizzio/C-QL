@@ -387,7 +387,7 @@ Time::Time(int Precision) : second(0), minute(0), hour(0), duration(0),
 
 Time::Time() : Time(0) {}
 
-Time::Time(double Duration, int Precision=0) : duration(Duration), precision(Precision) {
+Time::Time(double Duration, int Precision) : duration(Duration), precision(Precision) {
   durationToTime();
   enforceTimeInvariants();
 }
@@ -404,16 +404,14 @@ Time::Time(const string &HHMMSS, int Precision) : precision(Precision) {
   double fullSecond = stod(string(secondColon+1, HHMMSS.end()));
   second = (int)fullSecond;
 
-  fraction = (int)((fullSecond - (double)second) * pow(10, precision)) % 1;
+  fraction = (int)((fullSecond - (double)second) * pow(10, precision)) / 1;
     
   timeToDuration();
   enforceTimeInvariants();
 }
 
-Time::Time(int Hour, int Minute, int Second, int Fraction=0, int Precision=0) :
-           hour(Hour), minute(Minute), second(Second), precision(Precision) {
-  fraction = second % (int)pow(10, Precision);
-
+Time::Time(int Hour, int Minute, int Second, int Fraction, int Precision) :
+           hour(Hour), minute(Minute), second(Second), fraction(Fraction), precision(Precision) {
   timeToDuration();
   enforceTimeInvariants();
 }
@@ -451,7 +449,7 @@ Time Time::timeAdd(int difference, const TimeComponents mode) const {
   switch (mode) {
     // Assume the user is responsibly adding the decimal component
     case TimeComponents::FRACTIONS: {
-      updatedDuration += (difference / pow(10, precision));
+      updatedDuration += (double)(difference / pow(10, precision));
       break;
     }
     case TimeComponents::SECONDS: {
@@ -460,9 +458,11 @@ Time Time::timeAdd(int difference, const TimeComponents mode) const {
     }
     case TimeComponents::MINUTES: {
       updatedDuration += difference * 60;
+      break;
     } 
     case TimeComponents::HOURS: {
       updatedDuration += difference * 3600;
+      break;
     }
   }
 
@@ -480,7 +480,7 @@ Time Time::timeDiff(const Time &rhs) {
 void Time::timeToDuration() {
   duration = hour * 3600 + minute * 60 + second;
 
-  if (precision > 0) duration += fraction / (int)pow(10, precision);
+  if (precision > 0) duration += ((double)fraction / pow(10, precision));
 }
 
 void Time::durationToTime() {
@@ -490,12 +490,12 @@ void Time::durationToTime() {
   witheredDuration -= hour * 3600;
 
   minute = (u_int)(witheredDuration / 60);
-  witheredDuration -= hour * 60;
+  witheredDuration -= minute * 60;
 
   second = (u_int)(witheredDuration / 1);
-  witheredDuration -= minute * 1;
+  witheredDuration -= second * 1;
 
-  fraction = witheredDuration;
+  fraction = (int)(witheredDuration * pow(10, precision)) / 1;
 }
 
 void Time::enforceTimeInvariants() {
@@ -542,9 +542,9 @@ ostream& operator<<(ostream& os, const SQLChar& self){
 ostream& operator<<(ostream& os, const Date& self){
   char oldFill = os.fill();
 
-  os << setfill('0') << setw(4) << self.year << '-';
-  os << setfill('0') << setw(2) << self.month << '-';
-  os << setfill('0') << setw(2) << self.day;
+  os << right << setfill('0') << setw(4) << self.year << '-';
+  os << right << setfill('0') << setw(2) << self.month << '-';
+  os << right << setfill('0') << setw(2) << self.day;
 
   os.fill(oldFill);
   
@@ -554,10 +554,10 @@ ostream& operator<<(ostream& os, const Date& self){
 ostream& operator<<(ostream& os, const Time &self){
   char oldFill = os.fill();
 
-  os << setfill('0') << setw(2) << self.hour << ':';
-  os << setfill('0') << setw(2) << self.minute << ':';
-  os << setfill('0') << setw(2) << self.second;
-  if (self.precision > 0) os << setfill('0') << setw(self.precision) << self.fraction;
+  os << right << setfill('0') << setw(2) << self.hour << ':';
+  os << right << setfill('0') << setw(2) << self.minute << ':';
+  os << right << setfill('0') << setw(2) << self.second;
+  if (self.precision > 0) os << '.' << right << setfill('0') << setw(self.precision) << self.fraction;
   
   os.fill(oldFill);
 
