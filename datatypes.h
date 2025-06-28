@@ -267,6 +267,57 @@ class Time {
 
 Time getCurrentTime();
 
+enum class DatetimeComponents {
+  DATES,
+  TIMES
+};
+
+class Datetime {
+  public:
+    Datetime();
+
+    Datetime(const Date Datepart, const Time Timepart);
+
+    Datetime(const string &Datepart, const string &Timepart);
+    Datetime(const string &full); //support YYYY-MM-DDThh:mm:ss.dddddd
+
+    bool operator==(const Datetime &rhs) const;
+    bool operator!=(const Datetime &rhs) const;
+    bool operator<(const Datetime &rhs) const;
+    bool operator>(const Datetime &rhs) const;
+    bool operator<=(const Datetime &rhs) const;
+    bool operator>=(const Datetime &rhs) const;
+
+    friend ostream& operator<<(ostream& os, const Datetime &self);
+
+    Datetime datetimeAdd(const Datetime &rhs, const DatetimeComponents &mode) const;
+    Datetime datetimeAdd(const Date &rhs, const DateComponents &mode) const;
+    Datetime datetimeAdd(const Time &rhs, const DatetimeComponents &mode) const;
+
+    Datetime datetimeSub(const Datetime &rhs, const DatetimeComponents &mode) const;
+    Datetime datetimeSub(const Date &rhs, const DateComponents &mode) const;
+    Datetime datetimeSub(const Time &rhs, const DatetimeComponents &mode) const;
+
+    double extract(const TimeComponents &mode) const; // Extract HH, MM, SS, DDDDDD
+    int extract(const DateComponents &mode) const; // Extract YYYY, DD, MM
+    // WARNING: This extarct the DURATION; the actual date/time must be constructed from it
+    double extract(const DatetimeComponents &mode) const;
+    
+    Date date;
+    operator Date () const;
+    
+    Time time;
+    operator Time () const;
+
+  private:
+    void timeSubHelper(const Datetime &rhs);
+};
+
+int dateDiff(const Datetime &rhs, const Datetime &lhs, const DateComponents &mode);
+int dateDiff(const Datetime &rhs, const Datetime &lhs, const TimeComponents &mode);
+
+/////////////////// Comparison functor and type traits //////////////
+
 // Defining a type trait for string-like classes
 template <typename T>
 struct is_string : std::false_type {};
