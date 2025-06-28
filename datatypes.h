@@ -148,10 +148,12 @@ enum class DateComponents{
 
 class Date {
   public:
+    Date();
+
     Date(const int Year, const int Month, const int Day);
 
     // YYYY-MM-DD
-    Date(string &YearMonthDay);
+    Date(const string &YearMonthDay);
 
     // Days since 0001-01-01
     Date(const int Epoch);
@@ -237,7 +239,7 @@ class Time {
     Time timeSub(int difference, const TimeComponents mode) const;
 
     // returns absolute value difference, since negative time is not supported
-    Time timeDiff(const Time &rhs);
+    Time timeDiff(const Time &rhs) const;
 
     double extract(const TimeComponents mode) const;
 
@@ -249,13 +251,6 @@ class Time {
     u_int hour;
 
     double duration;
-
-    // NOTE: to delete later
-    string toString() const {
-            stringstream ss;
-            ss << *this;
-            return ss.str();
-        }
 
   private:
     void enforceTimeInvariants();
@@ -290,13 +285,11 @@ class Datetime {
 
     friend ostream& operator<<(ostream& os, const Datetime &self);
 
-    Datetime datetimeAdd(const Datetime &rhs, const DatetimeComponents &mode) const;
-    Datetime datetimeAdd(const Date &rhs, const DateComponents &mode) const;
-    Datetime datetimeAdd(const Time &rhs, const DatetimeComponents &mode) const;
+    Datetime datetimeAdd(const double &difference, const DateComponents &mode) const;
+    Datetime datetimeAdd(const double &difference, const TimeComponents &mode) const;
 
-    Datetime datetimeSub(const Datetime &rhs, const DatetimeComponents &mode) const;
-    Datetime datetimeSub(const Date &rhs, const DateComponents &mode) const;
-    Datetime datetimeSub(const Time &rhs, const DatetimeComponents &mode) const;
+    Datetime datetimeSub(const double &difference, const DateComponents &mode) const;
+    Datetime datetimeSub(const double &difference, const TimeComponents &mode) const;
 
     double extract(const TimeComponents &mode) const; // Extract HH, MM, SS, DDDDDD
     int extract(const DateComponents &mode) const; // Extract YYYY, DD, MM
@@ -310,7 +303,6 @@ class Datetime {
     operator Time () const;
 
   private:
-    void timeSubHelper(const Datetime &rhs);
 };
 
 int dateDiff(const Datetime &rhs, const Datetime &lhs, const DateComponents &mode);
@@ -370,6 +362,7 @@ using Types = variant<
   SQLChar,    //CHAR
   Date,       //DATE 
   Time,       //TIME  
+  Datetime,   //DATETIME  
   monostate   //NULL
 >;
 

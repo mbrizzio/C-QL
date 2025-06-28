@@ -103,6 +103,8 @@ string SQLChar::getUnpaddedValue() const{
 
 /////////////////////////// Date ///////////////////////////////////////
 
+Date::Date() : year(2000), month(1), day(1) {};
+
 Date::Date(const int Year, const int Month, const int Day) :
           year(Year), month(Month), day(Day) {
   enforceDateInvariants();
@@ -114,7 +116,7 @@ Date::Date(const int Epoch) : epoch(Epoch) {
 }
 
 // YYYY-MM-DD
-Date::Date(string &YearMonthDay){
+Date::Date(const string &YearMonthDay){
   if (YearMonthDay.size() != 10) {
     cerr << "Incorrect format for this constructor (should be YYYY-MM-DD)" << endl;
     exit(3);
@@ -473,7 +475,7 @@ Time Time::timeSub(int difference, const TimeComponents mode) const {
   return timeAdd(-difference, mode);
 }
 
-Time Time::timeDiff(const Time &rhs) {
+Time Time::timeDiff(const Time &rhs) const {
   return Time((double)abs(duration - rhs.duration));
 }
 
@@ -523,11 +525,139 @@ void Time::enforceTimeInvariants() {
 ////////////////////////// End Time ///////////////////////////////////////
 
 
+///////////////////////////// Datetime /////////////////////////////////////
+
+Datetime::Datetime() : date(Date()), time(Time()) {};
+
+Datetime::Datetime(const Date Datepart, const Time Timepart) : 
+                  date(Datepart), time(Timepart) {};
+
+Datetime::Datetime(const string &Datepart, const string &Timepart) :
+                  date(Date(Datepart)), time(Time(Timepart)) {};
+
+Datetime::Datetime(const string &full) : date(Date(string(full.begin(), full.begin() + 10))),
+                  time(Time(string(full.begin() + 11, full.end()))) {};
+
+
+Datetime Datetime::datetimeAdd(const double &difference, const DateComponents &mode) const {
+  Time timePortion = time; 
+  Date datePortion = date.dateAdd(difference, mode);
+
+  return Datetime(datePortion, timePortion);
+}
+
+// With this one, I need to be careful about time overflows and underflows
+// Add/Subtract a day when that would happen
+Datetime Datetime::datetimeAdd(const double &difference, const TimeComponents &mode) const{
+  double endOfDay = 24*3600;
+
+  Date newDate = date;
+  
+  Time differenceAsTime(0, 0, 0);
+  differenceAsTime = differenceAsTime.timeAdd(abs(difference), mode);
+  
+  double newDuration = time.duration + (differenceAsTime.duration * (-1 * difference < 0));
+
+  if (newDuration >= endOfDay){
+    newDuration -= endOfDay;
+    newDate = newDate.dateAdd(1, DateComponents::DAYS);
+  }
+  else if (newDuration < 0){
+    newDuration += endOfDay;
+    newDate = newDate.dateSub(1, DateComponents::DAYS);
+  }
+
+  return Datetime(newDate, Time(newDuration, 6));
+} 
+
+Datetime Datetime::datetimeSub(const double &difference, const DateComponents &mode) const{
+  return datetimeAdd(-difference, mode);
+}
+
+Datetime Datetime::datetimeSub(const double &difference, const TimeComponents &mode) const{
+  return datetimeAdd(-difference, mode);
+}
+
+
+double Datetime::extract(const TimeComponents &mode) const {
+  return time.extract(mode);
+}
+
+int Datetime::extract(const DateComponents &mode) const {
+  return date.extract(mode);
+}
+
+double Datetime::extract(const DatetimeComponents &mode) const {
+  switch (mode) {
+    case DatetimeComponents::DATES: {
+      return date.epoch;
+    }
+    case DatetimeComponents::TIMES: {
+      return time.duration;
+    }
+  }
+
+  return -1; // Should never reach here
+}
+
+int dateDiff(const Datetime &rhs, const Datetime &lhs, const DateComponents &mode){
+  int jumps = 0;
+
+  switch (mode){
+    case DateComponents::YEARS: {
+      jumps = rhs.date.year - lhs.date.year;
+      break;
+    }
+    case DateComponents::MONTHS: {
+      jumps = (rhs.date.year - lhs.date.year) * 12 + (rhs.date.month - lhs.date.month);
+      break;
+    }
+    case DateComponents::DAYS: {
+      jumps = rhs.date.epoch - lhs.date.epoch;
+      break;
+    }
+    case DateComponents::WEEKS: {
+      jumps = (rhs.date.epoch - lhs.date.epoch) / 7;
+      break;
+    }
+    case DateComponents::QUARTERS: {
+      jumps = (rhs.date.year - lhs.date.year) * 4 + (rhs.date.month - lhs.date.month) / 4;
+      break;  
+    }
+  }
+
+  return jumps;
+}
+
+int dateDiff(const Datetime &rhs, const Datetime &lhs, const TimeComponents &mode) {
+  int jumps = 0;
+  int dateJumps = dateDiff(rhs, lhs, DateComponents::DAYS);
+
+  switch (mode) {
+    case TimeComponents::HOURS: {
+      jumps = rhs.time.hour - lhs.time.hour + dateJumps * 24;
+      break;
+    }
+    case TimeComponents::MINUTES: {
+      jumps = rhs.time.minute - lhs.time.minute + (rhs.time.hour - lhs.time.hour + dateJumps * 24) * 60;
+      break;
+    }
+    case TimeComponents::SECONDS: {
+      jumps = rhs.time.second - lhs.time.second + ((rhs.time.hour - lhs.time.hour + dateJumps * 24) * 60) * 60;
+      break;
+    }
+  }
+
+  return jumps;
+}
+
+///////////////////////// End Datetime ////////////////////////////////////
+
+
 
 /////////////////////// misc operators (all classes) //////////////////////
-
-
 ////// OS operators 
+
 ostream& operator<<(ostream& os, const Varchar& self){
   os << self.value;
   return os;
@@ -564,6 +694,11 @@ ostream& operator<<(ostream& os, const Time &self){
   return os;
 }
 
+ostream& operator<<(ostream& os, const Datetime &self) {
+  os << self.date << " " << self.time;
+  return os;
+}
+
 ostream& operator<<(ostream& os, const Types& self){
   if (holds_alternative<monostate>(self)) os << "NULL";
   else if (holds_alternative<string>(self)) os << get<string>(self);
@@ -575,6 +710,9 @@ ostream& operator<<(ostream& os, const Types& self){
   else if (holds_alternative<int>(self)) os << to_string(get<int>(self));
   else if (holds_alternative<int16_t>(self)) os << to_string(get<int16_t>(self));
   else if (holds_alternative<int64_t>(self)) os << to_string(get<int64_t>(self));
+  else if (holds_alternative<Date>(self)) os << get<Date>(self);
+  else if (holds_alternative<Time>(self)) os << get<Time>(self);
+  else if (holds_alternative<Datetime>(self)) os << get<Datetime>(self);
   else {
     cerr << "Datatype of column currently unsupported by this function" << endl;
     exit(2);
@@ -612,11 +750,61 @@ Date::operator int() const {
   return epoch;
 }
 
+Datetime::operator Date () const {
+  return date;
+}
+
+Datetime::operator Time () const {
+  return time;
+}
+
 /////////////////////// Misc operators end //////////////////////////////
 
 
 
 /////////////////////// Comparator hell (all classes) ///////////////////
+
+////// Datetime vs. Datetime
+bool Datetime::operator==(const Datetime &rhs) const{
+  return date == rhs.date && time == rhs.time;
+}
+
+bool Datetime::operator!=(const Datetime &rhs) const{
+  return date != rhs.date || time != rhs.time;
+}
+
+bool Datetime::operator<(const Datetime &rhs) const{
+  if (date == rhs.date){
+    return time < rhs.time;
+  }
+
+  return date < rhs.date;
+}
+
+bool Datetime::operator>(const Datetime &rhs) const{
+  if (date == rhs.date){
+    return time > rhs.time;
+  }
+
+  return date > rhs.date;
+}
+
+bool Datetime::operator<=(const Datetime &rhs) const{
+  if (date == rhs.date){
+    return time <= rhs.time;
+  }
+
+  return date <= rhs.date;
+}
+
+bool Datetime::operator>=(const Datetime &rhs) const{
+  if (date == rhs.date){
+    return time >= rhs.time;
+  }
+
+  return date >= rhs.date;
+}
+
 
 ////// Time vs. Time
 bool Time::operator==(const Time &rhs) const {
