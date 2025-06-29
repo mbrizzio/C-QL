@@ -301,8 +301,6 @@ class Datetime {
     
     Time time;
     operator Time () const;
-
-  private:
 };
 
 int dateDiff(const Datetime &rhs, const Datetime &lhs, const DateComponents &mode);

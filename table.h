@@ -22,7 +22,7 @@ private:
 
     vector<string> supportedDatatypes = {
         "INTEGER", "SMALLINT", "BIGINT", "FLOAT", 
-        "TEXT", "CHAR", "VARCHAR","NULL"
+        "TEXT", "CHAR", "VARCHAR", "NULL"
     };
 
     int numRows = 0;

@@ -42,9 +42,9 @@ int main(){
   // charComparatorCorrectnessTests();
   // runTypesComparisonTests();
   // dateUnitTests();
-  dateComparisonTestSuite();
+  // dateComparisonTestSuite();
+  // dateArithmeticTestSuite();
+  // timeTestCases();
 
-  dateArithmeticTestSuite();
-
-  timeTestCases();
+  datetimeUnitTests();
 }

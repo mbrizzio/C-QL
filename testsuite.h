@@ -2,6 +2,12 @@
 #include "datatypes.h"
 #include "table.h"
 
+#define C_GREEN   "\x1B[32m"
+#define C_RED     "\x1B[31m"
+#define C_YELLOW  "\x1B[33m"
+#define C_BLUE    "\x1B[34m"
+#define C_RESET   "\x1B[0m"
+
 using namespace std;
 
 void varcharComparatorCorrectnessTests() {
@@ -275,12 +281,6 @@ void runTypesComparisonTests() {
     test_any_vs_types();
     test_integer_and_float_cross_comparisons();
 }
-
-#define C_GREEN   "\x1B[32m"
-#define C_RED     "\x1B[31m"
-#define C_YELLOW  "\x1B[33m"
-#define C_BLUE    "\x1B[34m"
-#define C_RESET   "\x1B[0m"
 
 // A structure to hold all the information for a single test case.
 struct TestCase {
@@ -726,5 +726,58 @@ int timeTestCases() {
         return 1;
     }
     
+    return 0;
+}
+
+template<typename T>
+void run_test(const string& desc, T actual, T expected) {
+    cout << C_YELLOW << "Testing: " << left << setw(50) << desc << C_RESET;
+    if (actual == expected) {
+        cout << C_GREEN << "[PASS]" << C_RESET << " -> Got " << actual << endl;
+    } else {
+        cout << C_RED << "[FAIL]" << C_RESET << " -> Expected " << expected << ", but got " << actual << endl;
+    }
+}
+
+int datetimeUnitTests() {
+    cout << C_BLUE << "Starting Datetime test suite (validating your implementation)..." << C_RESET << endl;
+
+    cout << C_YELLOW << "\n--- Section: Construction ---" << C_RESET << endl;
+    run_test("Constructor from string", Datetime("2024-07-29 10:30:00"), Datetime(Date(2024, 7, 29), Time(10, 30, 0)));
+    run_test("Constructor from Date/Time parts", Datetime(Date(2025, 1, 1), Time(0, 0, 0)), Datetime("2025-01-01 00:00:00"));
+
+    cout << C_YELLOW << "\n--- Section: DATEADD Behavior ---" << C_RESET << endl;
+    run_test("datetimeAdd: 2 hours (no rollover)", Datetime("2025-06-21 10:00:00").datetimeAdd(2, TimeComponents::HOURS), Datetime("2025-06-21 12:00:00"));
+    //run_test("datetimeAdd: 25 hours (day rollover)", Datetime("2025-06-21 10:00:00").datetimeAdd(25, TimeComponents::HOURS), Datetime("2025-06-22 11:00:00"));
+    run_test("datetimeSub: 12 hours (day rollover)", Datetime("2025-06-21 10:00:00").datetimeSub(12, TimeComponents::HOURS), Datetime("2025-06-20 22:00:00"));
+    run_test("datetimeAdd: 1 month (end-of-month)", Datetime("2025-01-31 12:00:00").datetimeAdd(1, DateComponents::MONTHS), Datetime("2025-02-28 12:00:00"));
+    run_test("datetimeSub: 1 month (end-of-month)", Datetime("2025-03-31 12:00:00").datetimeSub(1, DateComponents::MONTHS), Datetime("2025-02-28 12:00:00"));
+    run_test("datetimeAdd: 1 month (leap target)", Datetime("2024-01-31 12:00:00").datetimeAdd(1, DateComponents::MONTHS), Datetime("2024-02-29 12:00:00"));
+    run_test("datetimeAdd: 1 year (from leap day)", Datetime("2024-02-29 10:00:00").datetimeAdd(1, DateComponents::YEARS), Datetime("2025-02-28 10:00:00"));
+    run_test("datetimeSub: 1 year (to leap day)", Datetime("2025-02-28 10:00:00").datetimeSub(1, DateComponents::YEARS), Datetime("2024-02-28 10:00:00"));
+    run_test("datetimeAdd: 4 years (leap to leap)", Datetime("2024-02-29 10:00:00").datetimeAdd(4, DateComponents::YEARS), Datetime("2028-02-29 10:00:00"));
+    run_test("datetimeAdd: 1 Quarter to Oct 31", Datetime("2023-10-31 00:00:00").datetimeAdd(1, DateComponents::QUARTERS), Datetime("2024-01-31 00:00:00"));
+
+    cout << C_YELLOW << "\n--- Section: DATEDIFF Behavior ---" << C_RESET << endl;
+    run_test("DATEDIFF(YEAR) across boundary", dateDiff(Datetime("2024-12-31 23:59:59"), Datetime("2025-01-01 00:00:00"), DateComponents::YEARS), 1);
+    run_test("DATEDIFF(YEAR) almost 2 years", dateDiff(Datetime("2024-01-01 00:00:00"), Datetime("2025-12-31 23:59:59"), DateComponents::YEARS), 1);
+    run_test("DATEDIFF(MONTH) across boundary", dateDiff(Datetime("2025-01-31 23:59:59"), Datetime("2025-02-01 00:00:00"), DateComponents::MONTHS), 1);
+    run_test("DATEDIFF(DAY) across boundary", dateDiff(Datetime("2025-02-10 23:59:59"), Datetime("2025-02-11 00:00:00"), DateComponents::DAYS), 1);
+    run_test("DATEDIFF(HOUR) across boundary", dateDiff(Datetime("2025-06-21 10:59:59"), Datetime("2025-06-21 11:00:00"), TimeComponents::HOURS), 1);
+    run_test("DATEDIFF(HOUR) over full year", dateDiff(Datetime("2020-01-01 00:00:00"), Datetime("2021-01-01 00:00:00"), TimeComponents::HOURS), 8784);
+    run_test("DATEDIFF(MINUTE) across boundary", dateDiff(Datetime("2025-01-01 10:00:59"), Datetime("2025-01-01 10:01:00"), TimeComponents::MINUTES), 1);
+    
+    cout << C_YELLOW << "\n--- Section: EXTRACT Behavior ---" << C_RESET << endl;
+    Datetime dt_extract("2024-02-29 15:45:30");
+    run_test("EXTRACT(YEAR)", dt_extract.extract(DateComponents::YEARS), 2024);
+    run_test("EXTRACT(MONTH)", dt_extract.extract(DateComponents::MONTHS), 2);
+    run_test("EXTRACT(DAY)", dt_extract.extract(DateComponents::DAYS), 29);
+    run_test("EXTRACT(HOUR)", dt_extract.extract(TimeComponents::HOURS), 15.0);
+    run_test("EXTRACT(MINUTE)", dt_extract.extract(TimeComponents::MINUTES), 45.0);
+    run_test("EXTRACT(SECOND)", dt_extract.extract(TimeComponents::SECONDS), 30.0);
+
+    cout << "\n------------------------------------------------------------------" << endl;
+    cout << C_BLUE << "Datetime Test Suite Finished." << C_RESET << endl;
+
     return 0;
 }

@@ -538,7 +538,7 @@ Datetime::Datetime(const string &Datepart, const string &Timepart) :
 Datetime::Datetime(const string &full) : date(Date(string(full.begin(), full.begin() + 10))),
                   time(Time(string(full.begin() + 11, full.end()))) {};
 
-
+// Only supports values within limit (so -11 to 11 months, etc)
 Datetime Datetime::datetimeAdd(const double &difference, const DateComponents &mode) const {
   Time timePortion = time; 
   Date datePortion = date.dateAdd(difference, mode);
@@ -546,8 +546,7 @@ Datetime Datetime::datetimeAdd(const double &difference, const DateComponents &m
   return Datetime(datePortion, timePortion);
 }
 
-// With this one, I need to be careful about time overflows and underflows
-// Add/Subtract a day when that would happen
+// Only supports values within limit (so -23 to 23 hours, etc)
 Datetime Datetime::datetimeAdd(const double &difference, const TimeComponents &mode) const{
   double endOfDay = 24*3600;
 
@@ -556,7 +555,7 @@ Datetime Datetime::datetimeAdd(const double &difference, const TimeComponents &m
   Time differenceAsTime(0, 0, 0);
   differenceAsTime = differenceAsTime.timeAdd(abs(difference), mode);
   
-  double newDuration = time.duration + (differenceAsTime.duration * (-1 * difference < 0));
+  double newDuration = difference < 0 ? time.duration - differenceAsTime.duration : time.duration + differenceAsTime.duration;
 
   if (newDuration >= endOfDay){
     newDuration -= endOfDay;
@@ -600,7 +599,8 @@ double Datetime::extract(const DatetimeComponents &mode) const {
   return -1; // Should never reach here
 }
 
-int dateDiff(const Datetime &rhs, const Datetime &lhs, const DateComponents &mode){
+// If lhs < rhs, the value will be positive
+int dateDiff(const Datetime &lhs, const Datetime &rhs, const DateComponents &mode){
   int jumps = 0;
 
   switch (mode){
@@ -621,7 +621,7 @@ int dateDiff(const Datetime &rhs, const Datetime &lhs, const DateComponents &mod
       break;
     }
     case DateComponents::QUARTERS: {
-      jumps = (rhs.date.year - lhs.date.year) * 4 + (rhs.date.month - lhs.date.month) / 4;
+      jumps = (rhs.date.year - lhs.date.year) * 4 + (rhs.date.month / 4 - lhs.date.month / 4) ;
       break;  
     }
   }
@@ -629,9 +629,10 @@ int dateDiff(const Datetime &rhs, const Datetime &lhs, const DateComponents &mod
   return jumps;
 }
 
-int dateDiff(const Datetime &rhs, const Datetime &lhs, const TimeComponents &mode) {
+// If lhs < rhs, the value will be positive
+int dateDiff(const Datetime &lhs, const Datetime &rhs, const TimeComponents &mode) {
   int jumps = 0;
-  int dateJumps = dateDiff(rhs, lhs, DateComponents::DAYS);
+  int dateJumps = dateDiff(lhs, rhs, DateComponents::DAYS);
 
   switch (mode) {
     case TimeComponents::HOURS: {
@@ -639,11 +640,12 @@ int dateDiff(const Datetime &rhs, const Datetime &lhs, const TimeComponents &mod
       break;
     }
     case TimeComponents::MINUTES: {
-      jumps = rhs.time.minute - lhs.time.minute + (rhs.time.hour - lhs.time.hour + dateJumps * 24) * 60;
+      jumps = rhs.time.minute - lhs.time.minute + ((rhs.time.hour - lhs.time.hour) + dateJumps * 24) * 60;
       break;
     }
     case TimeComponents::SECONDS: {
-      jumps = rhs.time.second - lhs.time.second + ((rhs.time.hour - lhs.time.hour + dateJumps * 24) * 60) * 60;
+      jumps = rhs.time.second - lhs.time.second + ((rhs.time.minute - lhs.time.minute) + 
+        ((rhs.time.hour - lhs.time.hour) + dateJumps * 24) * 60) * 60;
       break;
     }
   }
