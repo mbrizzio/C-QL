@@ -364,10 +364,24 @@ using Types = variant<
   monostate   //NULL
 >;
 
+enum class Datatypes {
+  INT,
+  SMALLINT,
+  BIGINT,
+  FLOAT,
+  TEXT,
+  VARCHAR,
+  CHAR,
+  DATE,
+  TIME,
+  DATETIME,
+  NULLVALUE
+};
+
 ostream& operator<<(ostream& os, const Types& self);
 
 using Row = unordered_map<string, Types>;
-using Column = vector<Types>;
+using ColumnOld = vector<Types>;
 
 
 /////////////// Comparator hell part 2 ////////////////////////////
