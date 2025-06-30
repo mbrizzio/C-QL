@@ -117,6 +117,7 @@ class Column {
 // WILL BE FULLY REDESIGNED LATER
 class Table {
   public:
+  public:
     Table();
 
     void insertColumn(const string name, const string dataType);
@@ -128,6 +129,8 @@ class Table {
     
     void print();
 
+  private:
+    unordered_map<string, ColumnOld> columns;
   private:
     unordered_map<string, ColumnOld> columns;
     unordered_map<string, int> charTypeColumnLengths;
