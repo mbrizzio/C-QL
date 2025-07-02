@@ -30,7 +30,7 @@ Column::Column(const Datatypes Type, ColumnConstraints Constraints) : type(Type)
   isPrimaryKey(Constraints.IsPrimaryKey), isForeignKey(Constraints.IsForeignKey) {
   
   enforceCellContraint(defaultValue, true);    
-};
+}
 
 Column::Column(const vector<Types> Column, const Datatypes Type) : col(Column), type(Type) {
   ColumnConstraints defaultParams;
@@ -57,6 +57,45 @@ Column::Column(const vector<Types> Column, const Datatypes Type, ColumnConstrain
 
 int Column::size() const {
   return col.size();
+}
+
+void Column::push() {
+  col.push_back(defaultValue);
+}
+
+void Column::push(const Types value) {
+  enforceCellContraint(value);
+
+  col.push_back(value);
+}
+
+void Column::update(int index, const Types newValue) {
+  enforceCellContraint(newValue);
+
+  col[index] = newValue;
+}
+
+void Column::erase(int index) {
+  col.erase(col.begin() + index);
+}
+
+void Column::bulkErase(vector<int> &indices) {
+  // Sorting from greatest to smallest prevents any 'moved indices' shenanigans
+  sort(indices.begin(), indices.end(), std::greater<Types>());
+
+  for (int i : indices) {
+    col.erase(col.begin() + i);
+  }
+}
+
+void Column::bulkUpdate(vector<int> &indices, const Types newValue) {
+  enforceCellContraint(newValue);
+
+  for (int i : indices) {
+    col[i] = newValue;
+  }
+
+  enforceWholeColumnConstraints();
 }
 
 void Column::enforceCellContraint(const Types &cell, const bool comesFromBulk) const {

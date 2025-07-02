@@ -31,14 +31,14 @@ class Column {
     int size() const;
 
     void push();
-    void push(Types value);
+    void push(const Types value);
     void update(int index, const Types newValue);
 
     void pop();   
     void erase(int index);
 
-    void bulkErase(vector<int> indices);
-    void bulkUpdate(vector<int> indices, const Types newValue);
+    void bulkErase(vector<int> &indices);
+    void bulkUpdate(vector<int> &indices, const Types newValue);
 
     template <typename Comparator>
     bool meetsCondition(const int index, const Types &rhs, const Comparator &comp) const;
@@ -70,6 +70,7 @@ class Column {
                   , Column> 
            extract(const vector<int> &indices, const Component &mode) const;
     
+    // Should this be removed and movs to a Table class?
     template <typename Comparison>
     Column caseWhen(const vector<int> &indices, const Comparison &comp, 
                     const Types &whenTrue, const Types &whenFalse) const;
