@@ -1,11 +1,120 @@
 #pragma once
 #include "datatypes.h"
 #include "table.h"
-#include <iostream>
-#include <sstream>
+
 
 
 using namespace std;
+
+
+/////////////////////////// Column //////////////////////////////////////
+explicit Column::operator vector<Types> () const {
+  return col;
+}
+
+Column::Column(const Datatypes Type) : type(Type) {
+  ColumnConstraints defaultParams;
+  unique = defaultParams.Unique;
+  takesNulls = defaultParams.TakesNulls;
+  isPrimaryKey = defaultParams.IsPrimaryKey;
+  isForeignKey = defaultParams.IsForeignKey;
+  defaultValue = defaultParams.DefaultValue;
+
+  timePrecision = defaultParams.TimePrecision;
+  charLength = defaultParams.CharLength;
+}
+
+Column::Column(const Datatypes Type, ColumnConstraints Constraints) : type(Type),
+  unique(Constraints.Unique), takesNulls(Constraints.TakesNulls), defaultValue(Constraints.DefaultValue),
+  timePrecision(Constraints.TimePrecision), charLength(Constraints.CharLength), 
+  isPrimaryKey(Constraints.IsPrimaryKey), isForeignKey(Constraints.IsForeignKey) {
+  
+  enforceCellContraint(defaultValue, true);    
+};
+
+Column::Column(const vector<Types> Column, const Datatypes Type) : col(Column), type(Type) {
+  ColumnConstraints defaultParams;
+  unique = defaultParams.Unique;
+  takesNulls = defaultParams.TakesNulls;
+  isPrimaryKey = defaultParams.IsPrimaryKey;
+  isForeignKey = defaultParams.IsForeignKey;
+  defaultValue = defaultParams.DefaultValue;
+
+  timePrecision = defaultParams.TimePrecision;
+  charLength = defaultParams.CharLength; 
+  
+  enforceWholeColumnConstraints();
+}
+
+Column::Column(const vector<Types> Column, const Datatypes Type, ColumnConstraints Constraints) :
+  type(Type), col(Column), unique(Constraints.Unique), takesNulls(Constraints.TakesNulls), 
+  defaultValue(Constraints.DefaultValue),timePrecision(Constraints.TimePrecision), 
+  charLength(Constraints.CharLength), isPrimaryKey(Constraints.IsPrimaryKey), isForeignKey(Constraints.IsForeignKey) {
+
+  enforceCellContraint(defaultValue, true);
+  enforceWholeColumnConstraints();
+}
+
+int Column::size() const {
+  return col.size();
+}
+
+void Column::enforceCellContraint(const Types &cell, const bool comesFromBulk) const {
+  // Uniqueness (when coming in after the column has been created)
+  if (!comesFromBulk && cell != Null && find(col.begin(), col.end(), cell) != col.end()){
+    cerr << "Uniqueness constraint not met" << endl;
+    exit(5);
+  }
+
+  // Takes nulls 
+  if (cell == Null && !takesNulls){
+    cerr << "(Not) Takes Nulls constraint not met" << endl;
+    exit(5);
+  }
+
+  // Time Precision
+  if (holds_alternative<Time>(cell) && timePrecision != -1 && get<Time>(cell).precision != timePrecision) {
+    cerr << "Time precision constraint not met" << endl;
+    exit(5);
+  }
+
+  if (holds_alternative<Datetime>(cell) && timePrecision != -1 && get<Datetime>(cell).time.precision != timePrecision) {
+    cerr << "Time precision constraint not met" << endl;
+    exit(5);
+  }
+
+  // CharLength Precision
+  if (holds_alternative<Varchar>(cell) && timePrecision != -1 && get<Varchar>(cell).length != timePrecision) {
+    cerr << "Char length constraint not met" << endl;
+    exit(5);
+  }
+
+  if (holds_alternative<SQLChar>(cell) && timePrecision != -1 && get<SQLChar>(cell).length != timePrecision) {
+    cerr << "Char length constraint not met" << endl;
+    exit(5);
+  }
+}
+
+void Column::enforceWholeColumnConstraints() const {
+  for (Types cell : col){
+    enforceCellContraint(cell, true);
+  }
+
+  // Uniqueness must be enforced here. Since we supoprt instantiating this object
+  // with a vector, we must check this independently
+  set<Types> uniqueCol(col.begin(), col.end());
+  if (uniqueCol.size() != col.size()) {
+    cerr << "Uniqueness constraint not met" << endl;
+    exit(5);
+  }
+}
+
+
+///////////////////////////// Column end ////////////////////////////////
+
+
+
+////////////////////////////// Table start ///////////////////////////////
 
 // Public
 

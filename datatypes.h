@@ -297,10 +297,10 @@ class Datetime {
     double extract(const DatetimeComponents &mode) const;
     
     Date date;
-    operator Date () const;
+    explicit operator Date () const;
     
     Time time;
-    operator Time () const;
+    explicit operator Time () const;
 };
 
 int dateDiff(const Datetime &rhs, const Datetime &lhs, const DateComponents &mode);

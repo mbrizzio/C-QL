@@ -1,15 +1,20 @@
 #pragma once
 #include <algorithm>
+#include <iostream>
+#include <sstream>
+#include <set>
 #include "datatypes.h"
 
 // Container for columns; will likely be pretty barebones, housing only stuff that is self-contained to a column
 struct ColumnConstraints {
   bool Unique = false;
   bool TakesNulls = true;
+  bool IsPrimaryKey = false;
+  bool IsForeignKey = false;
   Types DefaultValue = Null;
 
-  int TimePrecision = 6;
-  int CharLength = 255; 
+  int TimePrecision = -1; // Indicates it can be anything
+  int CharLength = -1; // Indicates it can be anything
 };
 
 // Will need to create metaprogram type traits or just regular functions to
@@ -17,8 +22,6 @@ struct ColumnConstraints {
 
 class Column {
   public:
-    Column();
-
     Column(const Datatypes Type);
     Column(const Datatypes Type, ColumnConstraints Constraints);
 
@@ -96,27 +99,27 @@ class Column {
 
     string stringAggregate(const vector<int> &indices, string separator) const;
 
-    operator vector<Types> () const;
+    explicit operator vector<Types> () const;
   
     vector<Types> col;
     Datatypes type;
 
     bool unique = false;
     bool takesNulls = true;
+    bool isPrimaryKey = false;
+    bool isForeignKey = false;
     Types defaultValue = Null;
 
     int timePrecision = 6;
     int charLength = 255;
 
-    // Look into how CHECK works in SQL to inform its design
-
   private:
-    void enforceColumnConstraints();
+    void enforceWholeColumnConstraints() const;
+    void enforceCellContraint(const Types &cell, const bool comesFromBulk=false) const; 
 };
 
 // WILL BE FULLY REDESIGNED LATER
 class Table {
-  public:
   public:
     Table();
 
