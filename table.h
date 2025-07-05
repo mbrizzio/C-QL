@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <set>
+#include <cmath>
 #include "datatypes.h"
 
 // Container for columns; will likely be pretty barebones, housing only stuff that is self-contained to a column
@@ -101,15 +102,10 @@ class Column {
     string stringAggregate(const vector<int> &indices, string separator) const;
 
     explicit operator vector<Types> () const;
+    const Types& operator[] (int index) const;
+    Types& operator[] (int index);
   
-    vector<Types> col;
     Datatypes type;
-
-    bool unique = false;
-    bool takesNulls = true;
-    bool isPrimaryKey = false;
-    bool isForeignKey = false;
-    Types defaultValue = Null;
 
     int timePrecision = 6;
     int charLength = 255;
@@ -117,6 +113,13 @@ class Column {
   private:
     void enforceWholeColumnConstraints() const;
     void enforceCellContraint(const Types &cell, const bool comesFromBulk=false) const; 
+
+    bool unique = false;
+    bool takesNulls = true;
+    bool isPrimaryKey = false;
+    bool isForeignKey = false;
+    Types defaultValue = Null;
+    vector<Types> col;
 };
 
 // WILL BE FULLY REDESIGNED LATER
@@ -133,8 +136,6 @@ class Table {
     
     void print();
 
-  private:
-    unordered_map<string, ColumnOld> columns;
   private:
     unordered_map<string, ColumnOld> columns;
     unordered_map<string, int> charTypeColumnLengths;

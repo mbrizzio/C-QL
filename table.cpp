@@ -11,7 +11,34 @@ using namespace std;
 explicit Column::operator vector<Types> () const {
   return col;
 }
+// Supports 2 indices: regular indexing, and pythonic negative indexing
+const Types& Column::operator[] (int index) const {
+  if (abs(index) > size()){
+    cerr << "Index out of range" << endl;
+    exit(10);
+  }
 
+  if (index < 0){
+    return *(col.end() + index);
+  }
+
+  return *(col.begin() + index);
+}
+
+Types& Column::operator[] (int index) {
+  if (abs(index) > size()){
+    cerr << "Index out of range" << endl;
+    exit(10);
+  }
+
+  if (index < 0){
+    return *(col.end() + index);
+  }
+
+  return *(col.begin() + index);
+}
+
+////// Constructors
 Column::Column(const Datatypes Type) : type(Type) {
   ColumnConstraints defaultParams;
   unique = defaultParams.Unique;
@@ -55,6 +82,7 @@ Column::Column(const vector<Types> Column, const Datatypes Type, ColumnConstrain
   enforceWholeColumnConstraints();
 }
 
+////// Basic column manipulation
 int Column::size() const {
   return col.size();
 }
@@ -98,6 +126,64 @@ void Column::bulkUpdate(vector<int> &indices, const Types newValue) {
   enforceWholeColumnConstraints();
 }
 
+template <typename Comparator>
+bool Column::meetsCondition(const int index, const Types &rhs, const Comparator &comp) const {
+  Types &lhs = col[index];
+
+  return comp(lhs, rhs);
+}
+
+template <typename Comparator>
+vector<int> Column::indicesMeetingCondition(const Types &rhs, const Comparator &comp) const {
+  vector<int> goodIndices;
+  for (int i : col.size()) {
+    if (meetsCondition(i, rhs, comp)) goodIndices.push_back(i);
+  }
+
+  return goodIndices;
+}
+
+////// Temporary column creation functions
+
+// Does not do type checking, will error if given a non-decimal column
+Column Column::round(const vector<int> &indices, int decimals) const {
+  Column converted(Datatypes::BIGINT); //we round, so it will be an int always
+  float mult = pow(10, decimals);
+  
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+    }
+    else if (isString(type) || isNumeric(type)){
+      converted.push(
+        std::roundf(getNumeric<float>(col[i]) * mult ) / mult 
+      );
+    }
+    else {
+      converted.push(col[i]);
+    }
+  }
+}
+
+// Does not do type checking. Will attempt to work with a string type
+Column Column::ceiling(const vector<int> &indices) const {
+  Column converted(Datatypes::BIGINT); 
+
+  for (int i: indices){
+    if (col[i] == Null){
+      converted.push(Null);
+    }
+    else if (isNumeric(type) || isString(type)){
+      int64_t value = getNumeric<int64_t>(col[i]) + 1;
+      converted.push(value);
+    }
+    else {
+      converted.push(col[i]);
+    }
+  }
+}
+
+////// Private methods
 void Column::enforceCellContraint(const Types &cell, const bool comesFromBulk) const {
   // Uniqueness (when coming in after the column has been created)
   if (!comesFromBulk && cell != Null && find(col.begin(), col.end(), cell) != col.end()){
