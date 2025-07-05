@@ -670,7 +670,6 @@ ostream& operator<<(ostream& os, const SQLChar& self){
   return os;
 }
 
-// BUGGY, zeroes appear in the wrong side. how to fix?
 ostream& operator<<(ostream& os, const Date& self){
   char oldFill = os.fill();
 
@@ -715,6 +714,7 @@ ostream& operator<<(ostream& os, const Types& self){
   else if (holds_alternative<Date>(self)) os << get<Date>(self);
   else if (holds_alternative<Time>(self)) os << get<Time>(self);
   else if (holds_alternative<Datetime>(self)) os << get<Datetime>(self);
+  else if (holds_alternative<bool>(self)) os << get<bool>(self);
   else {
     cerr << "Datatype of column currently unsupported by this function" << endl;
     exit(2);

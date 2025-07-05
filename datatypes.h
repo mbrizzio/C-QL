@@ -351,6 +351,7 @@ struct GenericTypesVisitor {
 };
 
 using Types = variant<
+  bool,       //BOOL
   int,        //INTEGER
   int16_t,    //SMALLINT
   int64_t,    //BIGINT
@@ -365,6 +366,7 @@ using Types = variant<
 >;
 
 enum class Datatypes {
+  BOOL,
   INT,
   SMALLINT,
   BIGINT,
@@ -377,6 +379,40 @@ enum class Datatypes {
   DATETIME,
   NULLVALUE
 };
+
+bool isNumeric(const Datatypes type) {
+  return type == Datatypes::INT || type == Datatypes::SMALLINT || 
+         type == Datatypes::BIGINT || type == Datatypes::FLOAT;
+}
+
+bool isString(const Datatypes type) {
+  return type == Datatypes::TEXT || type == Datatypes::VARCHAR || 
+         type == Datatypes::CHAR;
+}
+
+// Arcane C++ syntax; try to understand variadic types later
+template <class... Ts>
+struct typesDatatypesConversionHelper : Ts... {using Ts::operator()...;};
+template <class... Ts>
+typesDatatypesConversionHelper(Ts...) -> typesDatatypesConversionHelper<Ts...>;
+
+// TBF!!!
+Datatypes typesToDatatypes(const Types &value) {
+  return std::visit(typesDatatypesConversionHelper{
+    [](monostate type) {return Datatypes::NULLVALUE;},
+    [](int type) {return Datatypes::INT;},
+    [](int16_t type) {return Datatypes::SMALLINT;},
+    [](int64_t type) {return Datatypes::BIGINT;},
+    [](float type) {return Datatypes::FLOAT;},
+    [](Varchar type) {return Datatypes::VARCHAR;},
+    [](SQLChar type) {return Datatypes::CHAR;},
+    [](Date type) {return Datatypes::DATE;},
+    [](Time type) {return Datatypes::TIME;},
+    [](Datetime type) {return Datatypes::DATETIME;},
+    [](bool type) {return Datatypes::BOOL;}
+
+  }, value);
+}
 
 ostream& operator<<(ostream& os, const Types& self);
 
