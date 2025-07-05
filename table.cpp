@@ -8,7 +8,7 @@ using namespace std;
 
 
 /////////////////////////// Column //////////////////////////////////////
-explicit Column::operator vector<Types> () const {
+Column::operator vector<Types> () const {
   return col;
 }
 // Supports 2 indices: regular indexing, and pythonic negative indexing
@@ -143,11 +143,11 @@ vector<int> Column::indicesMeetingCondition(const Types &rhs, const Comparator &
   return goodIndices;
 }
 
-////// Temporary column creation functions
 
+////// Temporary column creation functions
 // Does not do type checking, will error if given a non-decimal column
 Column Column::round(const vector<int> &indices, int decimals) const {
-  Column converted(Datatypes::BIGINT); //we round, so it will be an int always
+  Column converted(Datatypes::FLOAT); //we round to certain decimals, so needs to be float
   float mult = pow(10, decimals);
   
   for (int i : indices){
@@ -163,6 +163,8 @@ Column Column::round(const vector<int> &indices, int decimals) const {
       converted.push(col[i]);
     }
   }
+
+  return converted;
 }
 
 // Does not do type checking. Will attempt to work with a string type
@@ -181,10 +183,358 @@ Column Column::ceiling(const vector<int> &indices) const {
       converted.push(col[i]);
     }
   }
+
+  return converted;
 }
+
+Column Column::floor(const vector<int> &indices) const {
+  Column converted(Datatypes::BIGINT);
+
+  for (int i : indices){
+    if (col[i] == Null) {
+      converted.push(Null);
+    }
+    else if (isNumeric(type) || isString(type)){
+      converted.push((getNumeric<int64_t>(col[i])));
+    }
+    else{
+      converted.push(col[i]);
+    }
+  }
+
+  return converted;
+}
+
+// Works strictly with numeric types
+Column Column::absolute(const vector<int> &indices) const {
+  if (!isNumeric(type)){
+    cerr << "Column is not numeric" << endl;
+    exit(9);
+  }
+
+  Column converted(Datatypes::BIGINT);
+
+  for (int i : indices){
+    if (col[i] == Null) {
+      converted.push(Null);
+    }
+    else{
+      converted.push(abs(getNumeric<int>(col[i])));
+    }
+  }
+
+  return converted;
+}
+
+// Works strictly with string types
+Column Column::length(const vector<int> &indices) const {
+  if (!isString(type)){
+    cerr << "Column is not string based" << endl;
+    exit(9);
+  }
+
+  Column converted(Datatypes::INT);
+
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+    }
+    else{
+      converted.push((int)getString(col[i]).length());
+    }
+  }
+
+  return converted;
+}
+
+// Works strictly with string types
+Column Column::concat(const vector<int> &indices, string toConcatenate) const {
+  if (!isString(type)){
+    cerr << "Column is not string based" << endl;
+    exit(9);
+  }
+  
+  Column converted(Datatypes::TEXT);
+
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+    }
+    else{
+      converted.push(getString(col[i]) + toConcatenate);
+    }
+  }
+
+  return converted;
+}
+
+// Works strictly with string types
+Column Column::upper(const vector<int> &indices) const {
+  if (!isString(type)){
+    cerr << "Column is not string based" << endl;
+    exit(9);
+  }
+
+  Column converted(Datatypes::TEXT);
+
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+    }
+    else{
+      string text = getString(col[i]);
+
+      for (char &c : text) {c = 'a' <= c && c <= 'z' ? c + ('A' - 'a') : c;}
+
+      converted.push(text);
+    }
+  }
+
+  return converted;
+}
+
+// Works strictly with string types
+Column Column::lower(const vector<int> &indices) const {
+  if (!isString(type)){
+    cerr << "Column is not string based" << endl;
+    exit(9);
+  }
+
+  Column converted(Datatypes::TEXT);
+
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+    }
+    else{
+      string text = getString(col[i]);
+
+      for (char &c : text) {c = 'A' <= c && c <= 'Z' ? c + ('a' - 'A') : c;}
+
+      converted.push(text);
+    }
+  }
+
+  return converted;
+} 
+
+// Works strictly with string types
+Column Column::initCap(const vector<int> &indices) const {
+  if (!isString(type)){
+    cerr << "Column is not string based" << endl;
+    exit(9);
+  }
+
+  Column converted(Datatypes::TEXT);
+
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+    }
+    else{
+      string text = getString(col[i]);
+
+      if (text.empty()){
+        converted.push(text);
+        continue;
+      }
+      
+      // Is not smart; checks the literal first characterof the string
+      char &c = text[0];
+      for (char &c : text) {c = 'a' <= c && c <= 'z' ? c + ('A' - 'z') : c;}
+
+      converted.push(text);
+    }
+  }
+
+  return converted;
+}
+
+// Works strictly on strings. startPos is 1-indexed!
+Column Column::substring(const vector<int> &indices, int startPos, int length) const {
+  if (!isString(type)){
+    cerr << "Column is not string based" << endl;
+    exit(9);
+  }
+  
+  Column converted(Datatypes::TEXT);
+  --startPos;
+
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+    }
+    else{
+      string text = getString(col[i]);
+
+      if (text.size() < startPos){
+        converted.push("");
+        continue;
+      }
+
+      converted.push(text.substr(startPos, std::min(startPos + length, (int)text.size()) - startPos));
+    }
+  }
+
+  return converted;
+}
+
+// Works strictly on string types
+Column Column::trim(const vector<int> &indices, 
+                    const TrimModes mode, char toRemove) const {
+  if (!isString(type)){
+    cerr << "Column is not string based" << endl;
+    exit(9);    
+  }
+
+  Column converted(Datatypes::TEXT);
+
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+      continue;
+    }
+
+    string text = getString(col[i]);
+
+    switch (mode){
+      case TrimModes::LEADING: {
+        auto cut = text.begin();
+        while (cut != text.end() && *cut == toRemove){
+          ++cut;
+        }
+
+        converted.push(string(cut, text.end()));
+        break;
+      }
+
+      case TrimModes::TRAILING: {
+        auto cut = text.rbegin();
+        while (cut != text.rend() && *cut == toRemove){
+          ++cut;
+        }
+
+        converted.push(string(text.rend(), cut));
+        break;
+      }
+
+      case TrimModes::BOTH: {
+        auto bcut = text.begin();
+        while (bcut != text.end() && *bcut == toRemove){
+          ++bcut;
+        }
+
+        text = string(bcut, text.end());
+
+        auto ecut = text.rbegin();
+        while (ecut != text.rend() && *ecut == toRemove){
+          ++ecut;
+        }
+
+        converted.push(string(ecut, text.rbegin()));
+        break;
+      }
+    } // Switch statement
+  } // For loop
+
+  return converted;
+}
+
+// Works strictly on string types
+Column Column::replace(const vector<int> &indices, 
+                       const string &substr, const string &newVal) const {
+  if (!isString(type)){
+    cerr << "Column is not string based" << endl;
+    exit(9);    
+  }
+
+  Column converted(Datatypes::TEXT);  
+
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+      continue;
+    }
+
+    string text = getString(col[i]);
+
+    // Bug: there can be a case where a conversion generates extra cases of what needs 
+    // to be replaced, thereby deleting extra information
+    auto start = std::find(text.begin(), text.end(), newVal);
+    while (start != text.end()){
+      text.replace(start - text.begin(), substr.size(), newVal);
+      start = std::find(text.begin(), text.end(), newVal);
+    }
+
+    converted.push(text);
+  }
+
+  return converted;
+}
+
+Column Column::left(const vector<int> &indices, int cutoff) const {
+  if (!isString(type)){
+    cerr << "Column is not string based" << endl;
+    exit(9);    
+  }
+  
+  Column converted(Datatypes::TEXT);
+
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+    }
+    else{
+      string text = getString(col[i]);
+
+      if (cutoff > text.size()){
+        converted.push(text);
+        continue;
+      }
+
+      converted.push(string(text.begin(), text.begin() + cutoff));
+    }
+  }
+
+  return converted;
+}
+
+Column Column::right(const vector<int> &indices, int start) const {
+  if (!isString(type)){
+    cerr << "Column is not string based" << endl;
+    exit(9);    
+  }
+  
+  Column converted(Datatypes::TEXT);
+
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+    }
+    else{
+      string text = getString(col[i]);
+
+      if (start > text.size()){
+        converted.push("");
+        continue;
+      }
+
+      converted.push(string(text.rend(), text.rbegin() + start));
+    }
+  }
+
+  return converted;
+}
+
 
 ////// Private methods
 void Column::enforceCellContraint(const Types &cell, const bool comesFromBulk) const {
+  // Data type check
+  if (getType(cell) != type && getType(cell) != Datatypes::NULLVALUE){
+    cerr << "Datatype does not match the type of column" << endl;
+    exit(5);
+  }
+  
   // Uniqueness (when coming in after the column has been created)
   if (!comesFromBulk && cell != Null && find(col.begin(), col.end(), cell) != col.end()){
     cerr << "Uniqueness constraint not met" << endl;

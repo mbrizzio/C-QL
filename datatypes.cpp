@@ -48,6 +48,10 @@ string Varchar::getValue() const {
   return value;
 }
 
+int Varchar::getLength() const {
+  return value.length();
+}
+
 /////////////////////////////// End Varchar //////////////////////////////
 
 

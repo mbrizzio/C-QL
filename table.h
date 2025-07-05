@@ -6,6 +6,12 @@
 #include <cmath>
 #include "datatypes.h"
 
+enum class TrimModes {
+  LEADING,
+  TRAILING,
+  BOTH
+};
+
 // Container for columns; will likely be pretty barebones, housing only stuff that is self-contained to a column
 struct ColumnConstraints {
   bool Unique = false;
@@ -58,15 +64,15 @@ class Column {
     Column upper(const vector<int> &indices) const;
     Column lower(const vector<int> &indices) const;
     Column initCap(const vector<int> &indices) const;
-    Column substring(const vector<int> &indices, int startPos, int length);
-    Column trim(const vector<int> &indices);
+    Column substring(const vector<int> &indices, int startPos, int length) const;
+    Column trim(const vector<int> &indices, const TrimModes mode, char toRemove=' ') const;
     Column replace(const vector<int> &indices, 
-                   const string &substr, const string &newVal);
+                   const string &substr, const string &newVal) const;
     Column left(const vector<int> &indices, int cutoff) const;
     Column right(const vector<int> &indices, int start) const;
 
     template <typename Component>
-    std::enable_if<is_same_v<decay_t<Component>, DateComponents> 
+    std::enable_if_t<is_same_v<decay_t<Component>, DateComponents> 
                   || is_same_v<decay_t<Component>, TimeComponents>
                   , Column> 
            extract(const vector<int> &indices, const Component &mode) const;

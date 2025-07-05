@@ -39,6 +39,7 @@ class Varchar{
     Varchar(Table* table, std::string name, string Value);
 
     string getValue() const;
+    int getLength() const;
 
     string value;
     int length;
@@ -442,6 +443,7 @@ Datatypes getType(const Types &value) {
     [](float type) {return Datatypes::FLOAT;},
     [](Varchar type) {return Datatypes::VARCHAR;},
     [](SQLChar type) {return Datatypes::CHAR;},
+    [](string type) {return Datatypes::TEXT;},
     [](Date type) {return Datatypes::DATE;},
     [](Time type) {return Datatypes::TIME;},
     [](Datetime type) {return Datatypes::DATETIME;},

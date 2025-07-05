@@ -1,5 +1,5 @@
 # Compiler and flags
-CXX = g++
+CXX = g++-11
 CXXFLAGS = -std=c++20 -Wall -Wextra
 DEBUGFLAGS = -g
 
@@ -9,6 +9,7 @@ DEBUG_TARGET = sqldebug.exe
 
 # Source files
 SRCS = main.cpp datatypes.cpp table.cpp
+HDRS = datatypes.h table.h testsuite.h
 
 # Object files
 RELEASE_OBJS = $(SRCS:.cpp=.o)
@@ -28,11 +29,11 @@ $(DEBUG_TARGET): $(DEBUG_OBJS)
 	$(CXX) $(CXXFLAGS) $(DEBUGFLAGS) -o $@ $^
 
 # Compile .cpp to .o (release)
-%.o: %.cpp
+%.o: %.cpp $(HDRS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Compile .cpp to .debug.o (debug)
-%.debug.o: %.cpp
+%.debug.o: %.cpp $(HDRS)
 	$(CXX) $(CXXFLAGS) $(DEBUGFLAGS) -c $< -o $@
 
 # Clean all builds
