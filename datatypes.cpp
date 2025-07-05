@@ -760,6 +760,10 @@ Datetime::operator Time () const {
   return time;
 }
 
+Varchar::operator string () const {
+  return value;
+}
+
 /////////////////////// Misc operators end //////////////////////////////
 
 

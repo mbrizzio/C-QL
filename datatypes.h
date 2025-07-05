@@ -50,6 +50,8 @@ class Varchar{
       return comp(lhs, rhs);
     }
 
+    explicit operator string () const;
+
     bool operator==(const Varchar &rhs) const;
     bool operator!=(const Varchar &rhs) const;
     bool operator<(const Varchar &rhs) const;
@@ -390,14 +392,48 @@ bool isString(const Datatypes type) {
          type == Datatypes::CHAR;
 }
 
+string getString(const Types &value){
+  return std::visit([] (auto &value) -> string {
+    using Type = decay_t<decltype(value)>;
+
+    if constexpr (is_same_v<Type, string> || is_same_v<Type, Varchar> 
+                  || is_same_v<Type, SQLChar>){
+      return static_cast<string>(value);
+    }
+
+    cerr << "Value with no conversion to string passed" << endl;
+    exit(9);
+  }, value);
+}
+
+template <typename T>
+enable_if_t<is_arithmetic_v<T>, T>
+getNumeric(const Types &value) {
+  return std::visit([] (auto &value) -> T {
+    using Type = decay_t<decltype(value)>;
+
+    if constexpr (is_same_v<Type, int> || is_same_v<Type, int16_t> ||
+                  is_same_v<Type, int64_t> || is_same_v<Type, float>){
+      return static_cast<T>(value);
+    }
+
+    else if constexpr (is_same_v<Type, string> || is_same_v<Type, Varchar> 
+                  || is_same_v<Type, SQLChar>){
+      return static_cast<T>(stod(static_cast<string>(value)));
+    }
+
+    cerr << "Value with no conversion to double passed" << endl;
+    exit(9); 
+  }, value);
+}
+
 // Arcane C++ syntax; try to understand variadic types later
 template <class... Ts>
 struct typesDatatypesConversionHelper : Ts... {using Ts::operator()...;};
 template <class... Ts>
 typesDatatypesConversionHelper(Ts...) -> typesDatatypesConversionHelper<Ts...>;
 
-// TBF!!!
-Datatypes typesToDatatypes(const Types &value) {
+Datatypes getType(const Types &value) {
   return std::visit(typesDatatypesConversionHelper{
     [](monostate type) {return Datatypes::NULLVALUE;},
     [](int type) {return Datatypes::INT;},
