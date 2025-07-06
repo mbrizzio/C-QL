@@ -577,6 +577,141 @@ Column Column::nullIf(const vector<int> &indices, const Types &rhs) const {
   return converted;
 }
 
+Column Column::coalesce(const vector<int> &indices, const Types &rhs) const {
+  Column converted(type, {unique, false, isPrimaryKey, isForeignKey, 
+                          defaultValue, timePrecision, charLength});  
+
+  for (int i : indices) {
+    if (col[i] == Null){
+      converted.push(rhs);
+    }
+    else{
+      converted.push(col[i]);
+    }
+  }
+
+  return converted;
+}
+
+double Column::sum(const vector<int> &indices) const {
+  double total = 0;
+  
+  for (int i : indices){
+    if (col[i] == Null) continue;
+    
+
+    total += getNumeric<double>(col[i]);
+  }
+
+  return total;
+}
+
+double Column::sumDistinct(const vector<int> &indices) const { 
+  double total = 0;
+  set<double> seenNumbers; // This is a sum, so we can safely assume that we have a number
+
+  for (int i : indices) {
+    if (col[i] == Null) continue;
+
+    double value = getNumeric<double>(col[i]);
+
+    if (seenNumbers.contains(value)) continue;
+
+    seenNumbers.insert(value);
+    total += value;
+  }
+
+  return total;
+}
+
+int Column::count(const vector<int> &indices) const {
+  int total = 0;
+  for (int i : indices) {
+    if (col[i] == Null) continue;
+
+    ++total;
+  }
+
+  return total;
+}
+
+int Column::countDistinct(const vector<int> &indices) const {
+  int total = 0;
+  set<Types> seenValues;
+  for (int i : indices){
+    if (col[i] == Null || seenValues.contains(col[i])) continue;
+
+    seenValues.insert(col[i]);
+    ++total;
+  }
+
+  return total;
+}
+
+// Both can be made from O(2N) to O(N) by reqriting them, but this is cleaner
+double Column::avg(const vector<int> &indices) const {
+  return sum(indices) / (double)count(indices);
+}
+
+double Column::avgDistinct(const vector<int> &indices) const {
+  return sumDistinct(indices) / (double)countDistinct(indices);
+}
+
+// Cannot be done simply due to the fact that these are Types and need to be unpacked individually
+double Column::max(const vector<int> &indices) const {
+  double max = std::numeric_limits<double>::lowest();
+
+  for (int i : indices){
+    if (col[i] == Null) continue;
+
+    max = std::max(max, (getNumeric<double>(col[i])));
+  }
+
+  return max;
+}
+
+double Column::min(const vector<int> &indices) const {
+  double min = std::numeric_limits<double>::lowest();
+
+  for (int i : indices){
+    if (col[i] == Null) continue;
+
+    min = std::min(min, (getNumeric<double>(col[i])));
+  }
+
+  return min;
+}
+
+string Column::stringAggregate(const vector<int> &indices, string separator) const {
+  string result = "";
+
+  for (int i : indices){
+    ostringstream stringHolder;
+    stringHolder << col[i];
+
+    result += stringHolder.str();
+    result += separator;
+  }
+
+  return result;
+}
+
+// sqrt(sigma((xi - avg)^2 / N))
+// Does not do type checking. will attempt to convert strings to numbers
+double Column::standardDeviation(const vector<int> &indices) const {
+  float average = (float)avg(indices);
+  int N = count(indices);
+
+  double stddev = 0;
+
+  for (int i : indices) {
+    stddev += pow(getNumeric<float>(col[i]) - average, 2);
+  }
+
+  stddev /= N;
+
+  return stddev;  
+}
 
 ////// Private methods
 void Column::enforceCellContraint(const Types &cell, const bool comesFromBulk) const {

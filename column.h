@@ -4,6 +4,7 @@
 #include <sstream>
 #include <set>
 #include <cmath>
+#include <limits>
 #include "datatypes.h"
 
 enum class TrimModes {
@@ -94,8 +95,8 @@ class Column {
     double sumDistinct(const vector<int> &indices) const;
 
     // Ignore NULL
-    double count(const vector<int> &indices) const;
-    double countDistinct(const vector<int> &indices) const;
+    int count(const vector<int> &indices) const;
+    int countDistinct(const vector<int> &indices) const;
 
     // Ignore NULL
     double avg(const vector<int> &indices) const;

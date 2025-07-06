@@ -8,8 +8,8 @@ RELEASE_TARGET = sql.exe
 DEBUG_TARGET = sqldebug.exe
 
 # Source files
-SRCS = main.cpp datatypes.cpp table.cpp
-HDRS = datatypes.h table.h testsuite.h
+SRCS = main.cpp datatypes.cpp column.cpp
+HDRS = datatypes.h column.h testsuite.h
 
 # Object files
 RELEASE_OBJS = $(SRCS:.cpp=.o)
