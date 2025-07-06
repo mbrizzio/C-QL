@@ -309,7 +309,7 @@ class Datetime {
 int dateDiff(const Datetime &rhs, const Datetime &lhs, const DateComponents &mode);
 int dateDiff(const Datetime &rhs, const Datetime &lhs, const TimeComponents &mode);
 
-/////////////////// Comparison functor and type traits //////////////
+/////////////////// Types helper functions ////////////////////////////////////////
 
 // Defining a type trait for string-like classes
 template <typename T>
@@ -318,7 +318,7 @@ struct is_string : std::false_type {};
 template <typename T>
 constexpr bool is_string_v = is_string<T>::value;
 
-template <>
+template<>
 struct is_string<string> : std::true_type {};
 
 template<>
@@ -383,32 +383,25 @@ enum class Datatypes {
   NULLVALUE
 };
 
-bool isNumeric(const Datatypes type) {
+inline bool isNumeric(const Datatypes type) {
   return type == Datatypes::INT || type == Datatypes::SMALLINT || 
          type == Datatypes::BIGINT || type == Datatypes::FLOAT;
 }
 
-bool isString(const Datatypes type) {
+inline bool isString(const Datatypes type) {
   return type == Datatypes::TEXT || type == Datatypes::VARCHAR || 
          type == Datatypes::CHAR;
 }
 
-string getString(const Types &value){
-  return std::visit([] (auto &value) -> string {
-    using Type = decay_t<decltype(value)>;
-
-    if constexpr (is_same_v<Type, string> || is_same_v<Type, Varchar> 
-                  || is_same_v<Type, SQLChar>){
-      return static_cast<string>(value);
-    }
-
-    cerr << "Value with no conversion to string passed" << endl;
-    exit(9);
-  }, value);
+inline bool isDate(const Datatypes type) {
+  return type == Datatypes::DATE || type == Datatypes::TIME ||
+         type == Datatypes::DATETIME;
 }
+string getString(const Types &value);
 
+// Has to be here to prevent linking errors
 template <typename T>
-enable_if_t<is_arithmetic_v<T>, T>
+inline enable_if_t<is_arithmetic_v<T>, T>
 getNumeric(const Types &value) {
   return std::visit([] (auto &value) -> T {
     using Type = decay_t<decltype(value)>;
@@ -428,29 +421,29 @@ getNumeric(const Types &value) {
   }, value);
 }
 
+// template <typename T>
+// enable_if_t<is_same_v<decay_t<T>, Date> || is_same_v<decay_t<T>, Time>
+//             || is_same_v<decay_t<T>, Datetime>, T>
+// getDate(const Types &value){
+//   return std::visit([] (auto &value) -> T {
+//     using Type = decay_t<decltype(value)>;
+
+//     if constexpr (is_same_v<T, Date> || is_same_v<T, Time> || is_same_v<T, Datetime>){
+//       return value;
+//     }
+
+//     cerr << "Value that is not a date type passed" << endl;
+//     exit(9);
+//   }, value);
+// }
+
 // Arcane C++ syntax; try to understand variadic types later
 template <class... Ts>
 struct typesDatatypesConversionHelper : Ts... {using Ts::operator()...;};
 template <class... Ts>
 typesDatatypesConversionHelper(Ts...) -> typesDatatypesConversionHelper<Ts...>;
 
-Datatypes getType(const Types &value) {
-  return std::visit(typesDatatypesConversionHelper{
-    [](monostate type) {return Datatypes::NULLVALUE;},
-    [](int type) {return Datatypes::INT;},
-    [](int16_t type) {return Datatypes::SMALLINT;},
-    [](int64_t type) {return Datatypes::BIGINT;},
-    [](float type) {return Datatypes::FLOAT;},
-    [](Varchar type) {return Datatypes::VARCHAR;},
-    [](SQLChar type) {return Datatypes::CHAR;},
-    [](string type) {return Datatypes::TEXT;},
-    [](Date type) {return Datatypes::DATE;},
-    [](Time type) {return Datatypes::TIME;},
-    [](Datetime type) {return Datatypes::DATETIME;},
-    [](bool type) {return Datatypes::BOOL;}
-
-  }, value);
-}
+Datatypes getType(const Types &value);
 
 ostream& operator<<(ostream& os, const Types& self);
 

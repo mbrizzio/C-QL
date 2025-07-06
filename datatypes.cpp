@@ -1,6 +1,44 @@
 #pragma once
 #include "datatypes.h"
-#include "table.h"
+#include "column.h"
+
+/////////////////////// Types helper function ////////////////////////////
+
+string getString(const Types &value) {
+  return std::visit([] (auto &value) -> string {
+    using Type = decay_t<decltype(value)>;
+
+    if constexpr (is_same_v<Type, string> || is_same_v<Type, Varchar> 
+                  || is_same_v<Type, SQLChar>){
+      return static_cast<string>(value);
+    }
+
+    cerr << "Value with no conversion to string passed" << endl;
+    exit(9);
+  }, value);  
+}
+
+Datatypes getType(const Types &value) {
+  return std::visit(typesDatatypesConversionHelper{
+    [](monostate type) {return Datatypes::NULLVALUE;},
+    [](int type) {return Datatypes::INT;},
+    [](int16_t type) {return Datatypes::SMALLINT;},
+    [](int64_t type) {return Datatypes::BIGINT;},
+    [](float type) {return Datatypes::FLOAT;},
+    [](Varchar type) {return Datatypes::VARCHAR;},
+    [](SQLChar type) {return Datatypes::CHAR;},
+    [](string type) {return Datatypes::TEXT;},
+    [](Date type) {return Datatypes::DATE;},
+    [](Time type) {return Datatypes::TIME;},
+    [](Datetime type) {return Datatypes::DATETIME;},
+    [](bool type) {return Datatypes::BOOL;}
+
+  }, value);
+}
+
+/////////////////////// Types helper functions end ////////////////////////
+
+
 
 /////////////////////////////////// Varchar /////////////////////////////
 

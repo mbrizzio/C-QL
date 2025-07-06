@@ -77,13 +77,15 @@ class Column {
                   , Column> 
            extract(const vector<int> &indices, const Component &mode) const;
     
-    // Should this be removed and movs to a Table class?
-    template <typename Comparison>
-    Column caseWhen(const vector<int> &indices, const Comparison &comp, 
-                    const Types &whenTrue, const Types &whenFalse) const;
+    // Should this be removed and movs to a Table class? I am sure it should. keeping it here for now just in case
+    // template <typename Comparison>
+    // Column caseWhen(const vector<int> &indices, const Comparison &comp, 
+    //                 const Types &whenTrue, const Types &whenFalse) const;
     Column nullIf(const vector<int> &indices, const Types &rhs) const;
     Column coalesce(const vector<int> &indices, const Types &rhs) const;
+    
 
+    // Don't wanna deal with this one now, it will involve writing a lot of boilerplate for explicit casts
     Column cast(const vector<int> &indices, const Datatypes &type);
                 
     ////// Aggregate functions

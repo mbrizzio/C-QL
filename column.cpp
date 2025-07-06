@@ -1,16 +1,14 @@
 #pragma once
 #include "datatypes.h"
-#include "table.h"
-
-
+#include "column.h"
 
 using namespace std;
-
 
 /////////////////////////// Column //////////////////////////////////////
 Column::operator vector<Types> () const {
   return col;
 }
+
 // Supports 2 indices: regular indexing, and pythonic negative indexing
 const Types& Column::operator[] (int index) const {
   if (abs(index) > size()){
@@ -460,10 +458,11 @@ Column Column::replace(const vector<int> &indices,
 
     // Bug: there can be a case where a conversion generates extra cases of what needs 
     // to be replaced, thereby deleting extra information
-    auto start = std::find(text.begin(), text.end(), newVal);
-    while (start != text.end()){
-      text.replace(start - text.begin(), substr.size(), newVal);
-      start = std::find(text.begin(), text.end(), newVal);
+    size_t start = text.find(substr, 0);
+    
+    while (start != std::string::npos){
+      text.replace(start, substr.size(), newVal);
+      start = text.find(substr, 0);
     }
 
     converted.push(text);
@@ -526,6 +525,58 @@ Column Column::right(const vector<int> &indices, int start) const {
   return converted;
 }
 
+template <typename Component>
+std::enable_if_t<is_same_v<decay_t<Component>, DateComponents> 
+              || is_same_v<decay_t<Component>, TimeComponents>
+              , Column> 
+Column::extract(const vector<int> &indices, const Component &mode) const {
+  if (!isDate(type)){
+    cerr << "Column is not date based" << endl;
+    exit(9);
+  }
+
+  Column converted(Datatypes::FLOAT);
+
+  for (int i : indices){
+    if (col[i] == Null){
+      converted.push(Null);
+    }
+    else{
+      float component = std::visit([&mode] (auto &value) {
+        return static_cast<float>(value.extract(mode));
+      }, col[i]);
+
+      converted.push(component);
+    }
+  }
+
+  return converted;
+}
+
+Column Column::nullIf(const vector<int> &indices, const Types &rhs) const {
+  Column converted(type, {unique, true, isPrimaryKey, isForeignKey, 
+                          defaultValue, timePrecision, charLength});
+
+  for (int i : indices){
+    bool areEqual = std::visit([] (auto &lhs, auto &rhs) -> bool {
+      using lhsT = decay_t<decltype(lhs)>;
+      using rhsT = decay_t<decltype(rhs)>;
+
+      if constexpr (is_same_v<lhsT, rhsT> || (is_arithmetic_v<lhsT> && is_arithmetic_v<rhsT>) ||
+                    (is_string_v<lhsT> && is_string_v<rhsT>)){
+        return lhs == rhs;
+      }
+      
+      return false;
+    }, col[i], rhs);
+
+    if (areEqual) converted.push(Null);
+    else converted.push(col[i]);
+  }
+
+  return converted;
+}
+
 
 ////// Private methods
 void Column::enforceCellContraint(const Types &cell, const bool comesFromBulk) const {
@@ -583,6 +634,7 @@ void Column::enforceWholeColumnConstraints() const {
     exit(5);
   }
 }
+
 
 
 ///////////////////////////// Column end ////////////////////////////////

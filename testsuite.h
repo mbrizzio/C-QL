@@ -1,6 +1,6 @@
 #pragma once
 #include "datatypes.h"
-#include "table.h"
+#include "column.h"
 
 #define C_GREEN   "\x1B[32m"
 #define C_RED     "\x1B[31m"

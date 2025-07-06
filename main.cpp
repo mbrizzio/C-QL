@@ -1,5 +1,5 @@
 #include "datatypes.h"
-#include "table.h"
+#include "column.h"
 #include "testsuite.h"
 
 using namespace std;
