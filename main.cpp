@@ -4,7 +4,7 @@
 
 using namespace std;
 
-int main(){
+int main(int argc, char** argv) {
   // Table table;
 
   // table.insertColumn("test", "INTEGER");
@@ -46,5 +46,7 @@ int main(){
   // dateArithmeticTestSuite();
   // timeTestCases();
 
-  datetimeUnitTests();
+  //datetimeUnitTests();
+  ::testing::InitGoogleTest(&argc, argv);
+  RUN_ALL_TESTS();
 }

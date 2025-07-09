@@ -5,6 +5,7 @@
 #include <set>
 #include <cmath>
 #include <limits>
+#include <cctype>
 #include "datatypes.h"
 
 enum class TrimModes {
@@ -49,10 +50,20 @@ class Column {
     void bulkUpdate(vector<int> &indices, const Types newValue);
 
     template <typename Comparator>
-    bool meetsCondition(const int index, const Types &rhs, const Comparator &comp) const;
+    bool meetsCondition(const int index, const Types &rhs, const Comparator &comp) const {
+      return comp(col[index], rhs);
+    }
 
+    // Needs to be here to avert linker errors
     template <typename Comparator>
-    vector<int> indicesMeetingCondition(const Types &rhs, const Comparator &comp) const;
+    vector<int> indicesMeetingCondition(const Types &rhs, const Comparator &comp) const {
+      vector<int> goodIndices;
+      for (int i = 0; i < col.size(); ++i) {
+        if (meetsCondition(i, rhs, comp)) goodIndices.push_back(i);
+      }
+
+      return goodIndices;
+    }
 
     ////// Temporary column creation functions
     Column round(const vector<int> &indices, int decimals) const;
@@ -130,6 +141,8 @@ class Column {
     Types defaultValue = Null;
     vector<Types> col;
 };
+
+Types validNonNullDefaultValue(Datatypes type);
 
 // WILL BE FULLY REDESIGNED LATER
 class Table {

@@ -1,6 +1,9 @@
 #pragma once
 #include "datatypes.h"
 #include "column.h"
+#include "gtest/gtest.h" // Or your favorite C++ testing framework
+#include <numeric>
+#include <stdexcept>
 
 #define C_GREEN   "\x1B[32m"
 #define C_RED     "\x1B[31m"
@@ -781,3 +784,756 @@ int datetimeUnitTests() {
 
     return 0;
 }
+
+
+// // Mock or stub implementations for Varchar, SQLChar, Date, Time, Datetime if they are complex classes
+// // For this test suite, we'll assume they have appropriate constructors and operators.
+
+// // Helper to create a vector of all indices for a column
+// std::vector<int> all_indices(const Column& col) {
+//     std::vector<int> indices(col.size());
+//     std::iota(indices.begin(), indices.end(), 0);
+//     return indices;
+// }
+
+// //=================================================================================================
+// // 1. CONSTRUCTOR AND BASIC SETUP TESTS
+// //=================================================================================================
+
+// TEST(ColumnTest, Constructor_EmptyWithType) {
+//     // Tests creating an empty column of a specific data type.
+//     Column int_col(Datatypes::INT);
+//     ASSERT_EQ(int_col.size(), 0);
+//     ASSERT_EQ(int_col.type, Datatypes::INT);
+
+//     Column text_col(Datatypes::TEXT);
+//     ASSERT_EQ(text_col.size(), 0);
+//     ASSERT_EQ(text_col.type, Datatypes::TEXT);
+// }
+
+// TEST(ColumnTest, Constructor_FromVector) {
+//     // Tests creating a column pre-populated with data.
+//     std::vector<Types> data = {10, 20, 30};
+//     Column col(data, Datatypes::INT);
+//     ASSERT_EQ(col.size(), 3);
+//     ASSERT_EQ(col[1], Types(20));
+// }
+
+// TEST(ColumnTest, Constructor_FromVectorWithConstraints) {
+//     // Tests that constraints are checked upon creation.
+//     // This should fail because the `Unique` constraint is violated.
+//     std::vector<Types> data = {10, 20, 10}; // Duplicate value
+//     ColumnConstraints constraints;
+//     constraints.Unique = true;
+//     ASSERT_THROW(Column(data, Datatypes::INT, constraints), std::runtime_error);
+// }
+
+// TEST(ColumnTest, Constructor_NotNullConstraint) {
+//     // Tests that the NOT NULL constraint is checked upon creation.
+//     std::vector<Types> data = {10, monostate{}, 30}; // Contains NULL
+//     ColumnConstraints constraints;
+//     constraints.TakesNulls = false;
+//     ASSERT_THROW(Column(data, Datatypes::INT, constraints), std::runtime_error);
+// }
+
+
+// //=================================================================================================
+// // 2. DATA MANIPULATION TESTS (push, update, pop, erase)
+// //=================================================================================================
+
+// TEST(ColumnTest, Push_WithValue) {
+//     // Tests adding values to the column.
+//     Column col(Datatypes::TEXT);
+//     col.push("hello");
+//     col.push("world");
+//     ASSERT_EQ(col.size(), 2);
+//     ASSERT_EQ(getString(col[0]), "hello");
+// }
+
+// TEST(ColumnTest, Push_DefaultValue) {
+//     // Tests pushing a default value (NULL in this case) when no argument is provided.
+//     Column col(Datatypes::INT);
+//     col.push();
+//     ASSERT_EQ(col.size(), 1);
+//     ASSERT_TRUE(std::holds_alternative<monostate>(col[0]));
+// }
+
+// TEST(ColumnTest, Push_WithCustomDefaultValue) {
+//     // Tests pushing a user-defined default value.
+//     ColumnConstraints constraints;
+//     constraints.DefaultValue = Types(0);
+//     Column col(Datatypes::INT, constraints);
+//     col.push();
+//     ASSERT_EQ(col.size(), 1);
+//     ASSERT_EQ(std::get<int>(col[0]), 0);
+// }
+
+// TEST(ColumnTest, Push_ViolatesUniqueness) {
+//     // Tests that pushing a duplicate value into a unique column throws an error.
+//     ColumnConstraints constraints;
+//     constraints.Unique = true;
+//     Column col(Datatypes::INT, constraints);
+//     col.push(100);
+//     ASSERT_THROW(col.push(100), std::runtime_error);
+// }
+
+// TEST(ColumnTest, Update_ValidIndex) {
+//     // Tests updating an existing value.
+//     std::vector<Types> data = {1, 2, 3};
+//     Column col(data, Datatypes::INT);
+//     col.update(1, 99);
+//     ASSERT_EQ(std::get<int>(col[1]), 99);
+// }
+
+// TEST(ColumnTest, Update_ViolatesNotNull) {
+//     // Tests that updating a value to NULL in a NOT NULL column fails.
+//     std::vector<Types> data = {1, 2, 3};
+//     ColumnConstraints constraints;
+//     constraints.TakesNulls = false;
+//     Column col(data, Datatypes::INT, constraints);
+//     ASSERT_THROW(col.update(1, monostate{}), std::runtime_error);
+// }
+
+// TEST(ColumnTest, Pop_OnNonEmptyColumn) {
+//     // Tests removing the last element.
+//     std::vector<Types> data = {"a", "b"};
+//     Column col(data, Datatypes::TEXT);
+//     col.pop();
+//     ASSERT_EQ(col.size(), 1);
+//     ASSERT_EQ(getString(col[0]), "a");
+// }
+
+// TEST(ColumnTest, Pop_OnEmptyColumn) {
+//     // Tests that calling pop on an empty column is safe (e.g., does nothing or throws).
+//     // Assuming a safe no-op.
+//     Column col(Datatypes::INT);
+//     ASSERT_NO_THROW(col.pop());
+//     ASSERT_EQ(col.size(), 0);
+// }
+
+// TEST(ColumnTest, BulkUpdate_And_BulkErase) {
+//     // Tests modifying multiple records at once.
+//     std::vector<Types> data = {10, 20, 30, 40, 50};
+//     Column col(data, Datatypes::INT);
+    
+//     // Bulk Update
+//     std::vector<int> update_indices = {0, 2, 4};
+//     col.bulkUpdate(update_indices, 0);
+//     ASSERT_EQ(std::get<int>(col[0]), 0);
+//     ASSERT_EQ(std::get<int>(col[1]), 20);
+//     ASSERT_EQ(std::get<int>(col[2]), 0);
+//     ASSERT_EQ(std::get<int>(col[3]), 40);
+//     ASSERT_EQ(std::get<int>(col[4]), 0);
+
+//     // Bulk Erase
+//     std::vector<int> erase_indices = {0, 3}; // Erase 0 and 40
+//     col.bulkErase(erase_indices);
+//     ASSERT_EQ(col.size(), 3);
+//     ASSERT_EQ(std::get<int>(col[0]), 20);
+//     ASSERT_EQ(std::get<int>(col[1]), 0);
+//     ASSERT_EQ(std::get<int>(col[2]), 0);
+// }
+
+// //=================================================================================================
+// // 3. TEMPORARY COLUMN CREATION (SCALAR FUNCTIONS)
+// //=================================================================================================
+
+// // --- Numeric Functions ---
+
+// TEST(ColumnTest, Round_DecimalPlaces) {
+//     // Tests rounding numbers to a specified number of decimal places.
+//     std::vector<Types> data = {1.234f, 5.678f, 9.0f, monostate{}};
+//     Column col(data, Datatypes::FLOAT);
+//     Column rounded_col = col.round(all_indices(col), 2);
+    
+//     ASSERT_EQ(rounded_col.size(), 4);
+//     ASSERT_FLOAT_EQ(std::get<float>(rounded_col[0]), 1.23f);
+//     ASSERT_FLOAT_EQ(std::get<float>(rounded_col[1]), 5.68f);
+//     ASSERT_FLOAT_EQ(std::get<float>(rounded_col[2]), 9.00f);
+//     ASSERT_TRUE(std::holds_alternative<monostate>(rounded_col[3])); // NULLs should propagate
+// }
+
+// TEST(ColumnTest, FloorAndCeiling) {
+//     // Tests floor and ceiling functions.
+//     std::vector<Types> data = {1.1f, -2.8f, 5.0f};
+//     Column col(data, Datatypes::FLOAT);
+    
+//     Column floor_col = col.floor(all_indices(col));
+//     ASSERT_FLOAT_EQ(std::get<float>(floor_col[0]), 1.0f);
+//     ASSERT_FLOAT_EQ(std::get<float>(floor_col[1]), -3.0f);
+//     ASSERT_FLOAT_EQ(std::get<float>(floor_col[2]), 5.0f);
+
+//     Column ceil_col = col.ceiling(all_indices(col));
+//     ASSERT_FLOAT_EQ(std::get<float>(ceil_col[0]), 2.0f);
+//     ASSERT_FLOAT_EQ(std::get<float>(ceil_col[1]), -2.0f);
+//     ASSERT_FLOAT_EQ(std::get<float>(ceil_col[2]), 5.0f);
+// }
+
+// // --- String Functions ---
+
+// TEST(ColumnTest, Concat_Basic) {
+//     // Tests string concatenation.
+//     std::vector<Types> data = {"apple", "orange", monostate{}, "plum"};
+//     Column col(data, Datatypes::TEXT);
+//     Column new_col = col.concat(all_indices(col), "-fruit");
+    
+//     ASSERT_EQ(getString(new_col[0]), "apple-fruit");
+//     ASSERT_EQ(getString(new_col[1]), "orange-fruit");
+//     ASSERT_TRUE(std::holds_alternative<monostate>(new_col[2]));
+//     ASSERT_EQ(getString(new_col[3]), "plum-fruit");
+// }
+
+// TEST(ColumnTest, UpperAndLower) {
+//     // Tests converting string case.
+//     std::vector<Types> data = {"Case", "MIXED", "lower"};
+//     Column col(data, Datatypes::TEXT);
+
+//     Column upper_col = col.upper(all_indices(col));
+//     ASSERT_EQ(getString(upper_col[0]), "CASE");
+//     ASSERT_EQ(getString(upper_col[1]), "MIXED");
+//     ASSERT_EQ(getString(upper_col[2]), "LOWER");
+
+//     Column lower_col = col.lower(all_indices(col));
+//     ASSERT_EQ(getString(lower_col[0]), "case");
+//     ASSERT_EQ(getString(lower_col[1]), "mixed");
+//     ASSERT_EQ(getString(lower_col[2]), "lower");
+// }
+
+// TEST(ColumnTest, Trim_BothModes) {
+//     // Tests trimming whitespace from both sides.
+//     std::vector<Types> data = {"  hello  ", "  world", "no-spaces"};
+//     Column col(data, Datatypes::TEXT);
+//     Column trimmed_col = col.trim(all_indices(col), TrimModes::BOTH);
+
+//     ASSERT_EQ(getString(trimmed_col[0]), "hello");
+//     ASSERT_EQ(getString(trimmed_col[1]), "world");
+//     ASSERT_EQ(getString(trimmed_col[2]), "no-spaces");
+// }
+
+// TEST(ColumnTest, Trim_LeadingWithChar) {
+//     // Tests trimming a specific character from the beginning of strings.
+//     std::vector<Types> data = {"$$$100", "$200", "300"};
+//     Column col(data, Datatypes::TEXT);
+//     Column trimmed_col = col.trim(all_indices(col), TrimModes::LEADING, '$');
+    
+//     ASSERT_EQ(getString(trimmed_col[0]), "100");
+//     ASSERT_EQ(getString(trimmed_col[1]), "200");
+//     ASSERT_EQ(getString(trimmed_col[2]), "300");
+// }
+
+// TEST(ColumnTest, Substring_Valid) {
+//     // Tests extracting a substring.
+//     std::vector<Types> data = {"abcdef", "ghijkl"};
+//     Column col(data, Datatypes::TEXT);
+//     // SQL SUBSTRING is often 1-indexed, let's assume this implementation is 0-indexed.
+//     Column sub_col = col.substring(all_indices(col), 1, 3); // Extracts "bcd" and "hij"
+    
+//     ASSERT_EQ(getString(sub_col[0]), "bcd");
+//     ASSERT_EQ(getString(sub_col[1]), "hij");
+// }
+
+// TEST(ColumnTest, Substring_ExceedsLength) {
+//     // Tests that asking for more characters than available works correctly.
+//     std::vector<Types> data = {"short"};
+//     Column col(data, Datatypes::TEXT);
+//     Column sub_col = col.substring(all_indices(col), 2, 100); // from 'o' to the end
+    
+//     ASSERT_EQ(getString(sub_col[0]), "ort");
+// }
+
+
+// // --- Conditional Functions ---
+
+// TEST(ColumnTest, NullIf_ConditionMet) {
+//     // Tests NULLIF where the condition is met.
+//     std::vector<Types> data = {10, 20, 30, 20};
+//     Column col(data, Datatypes::INT);
+//     Column nullif_col = col.nullIf(all_indices(col), 20);
+
+//     ASSERT_EQ(std::get<int>(nullif_col[0]), 10);
+//     ASSERT_TRUE(std::holds_alternative<monostate>(nullif_col[1]));
+//     ASSERT_EQ(std::get<int>(nullif_col[2]), 30);
+//     ASSERT_TRUE(std::holds_alternative<monostate>(nullif_col[3]));
+// }
+
+// TEST(ColumnTest, Coalesce_WithNulls) {
+//     // Tests COALESCE, which should replace NULLs with a specified value.
+//     std::vector<Types> data = {100, monostate{}, 300, monostate{}};
+//     Column col(data, Datatypes::INT);
+//     Column coalesced_col = col.coalesce(all_indices(col), 0);
+    
+//     ASSERT_EQ(std::get<int>(coalesced_col[0]), 100);
+//     ASSERT_EQ(std::get<int>(coalesced_col[1]), 0);
+//     ASSERT_EQ(std::get<int>(coalesced_col[2]), 300);
+//     ASSERT_EQ(std::get<int>(coalesced_col[3]), 0);
+// }
+
+
+// //=================================================================================================
+// // 4. AGGREGATE FUNCTION TESTS
+// //=================================================================================================
+
+// TEST(ColumnTest, Sum_And_SumDistinct) {
+//     // Tests sum and distinct sum, ensuring NULLs are ignored.
+//     std::vector<Types> data = {10, 20, monostate{}, 10, 30.5f};
+//     Column col(data, Datatypes::FLOAT);
+    
+//     double total_sum = col.sum(all_indices(col));
+//     ASSERT_DOUBLE_EQ(total_sum, 70.5);
+
+//     double distinct_sum = col.sumDistinct(all_indices(col));
+//     ASSERT_DOUBLE_EQ(distinct_sum, 60.5); // 10 + 20 + 30.5
+// }
+
+// TEST(ColumnTest, Count_And_CountDistinct) {
+//     // Tests count and distinct count for all non-null values.
+//     std::vector<Types> data = {"A", "B", monostate{}, "A", "C"};
+//     Column col(data, Datatypes::TEXT);
+
+//     int total_count = col.count(all_indices(col));
+//     ASSERT_EQ(total_count, 4); // Counts non-null values
+
+//     int distinct_count = col.countDistinct(all_indices(col));
+//     ASSERT_EQ(distinct_count, 3); // A, B, C
+// }
+
+// TEST(ColumnTest, Avg_And_AvgDistinct) {
+//     // Tests average and distinct average.
+//     std::vector<Types> data = {10, 20, monostate{}, 10, 20}; // Non-nulls are {10, 20, 10, 20}
+//     Column col(data, Datatypes::INT);
+    
+//     // Avg = (10+20+10+20) / 4 = 15
+//     double total_avg = col.avg(all_indices(col));
+//     ASSERT_DOUBLE_EQ(total_avg, 15.0);
+    
+//     // Avg Distinct = (10+20) / 2 = 15
+//     double distinct_avg = col.avgDistinct(all_indices(col));
+//     ASSERT_DOUBLE_EQ(distinct_avg, 15.0);
+// }
+
+// TEST(ColumnTest, Avg_AllNulls) {
+//     // The average of an empty set (e.g., all NULLs) is NULL in SQL.
+//     // The function returns double, so we expect a specific behavior, like returning 0 or NaN, or throwing.
+//     // Let's assume throwing is the desired behavior to signal an undefined result.
+//     std::vector<Types> data = {monostate{}, monostate{}};
+//     Column col(data, Datatypes::INT);
+//     ASSERT_THROW(col.avg(all_indices(col)), std::runtime_error);
+// }
+
+// TEST(ColumnTest, Max_And_Min_Numeric) {
+//     // Tests max and min on a numeric column.
+//     std::vector<Types> data = {10, -5, monostate{}, 100, 25};
+//     Column col(data, Datatypes::INT);
+
+//     ASSERT_DOUBLE_EQ(col.max(all_indices(col)), 100);
+//     ASSERT_DOUBLE_EQ(col.min(all_indices(col)), -5);
+// }
+
+// TEST(ColumnTest, Max_And_Min_String) {
+//     // Tests max and min on a string column (lexicographical comparison).
+//     std::vector<Types> data = {"apple", "banana", monostate{}, "zebra", "cherry"};
+//     Column col(data, Datatypes::TEXT);
+    
+//     // Assuming max/min on strings are not directly supported by the double-returning function.
+//     // This is a design question. If they should be, the return type should be `Types`.
+//     // Let's assume these functions throw for non-numeric types.
+//     ASSERT_THROW(col.max(all_indices(col)), std::runtime_error);
+//     ASSERT_THROW(col.min(all_indices(col)), std::runtime_error);
+// }
+
+// TEST(ColumnTest, StringAggregate) {
+//     // Tests aggregating strings with a separator.
+//     std::vector<Types> data = {"first", "second", monostate{}, "third"};
+//     Column col(data, Datatypes::TEXT);
+    
+//     string result = col.stringAggregate(all_indices(col), ", ");
+//     ASSERT_EQ(result, "first, second, third");
+// }
+
+// TEST(ColumnTest, StringAggregate_EmptySeparator) {
+//     // Tests aggregating strings with an empty separator.
+//     std::vector<Types> data = {"a", "b", "c"};
+//     Column col(data, Datatypes::TEXT);
+    
+//     string result = col.stringAggregate(all_indices(col), "");
+//     ASSERT_EQ(result, "abc");
+// }
+
+// Helper to create a vector of indices from 0 to n-1
+std::vector<int> create_indices(int n) {
+    std::vector<int> indices(n);
+    std::iota(indices.begin(), indices.end(), 0);
+    return indices;
+}
+
+// Test Fixture for the Column class
+class ColumnTest : public ::testing::Test {
+protected:
+    // You can add setup and teardown logic here if needed
+    // For example, creating common Column objects for tests
+    Column int_col{Datatypes::INT};
+    Column string_col{Datatypes::TEXT};
+    Column float_col{Datatypes::FLOAT};
+    Column date_col{Datatypes::DATETIME};
+};
+
+//##############################################################################
+// CONSTRUCTOR AND BASIC OPERATIONS TESTS
+//##############################################################################
+
+TEST_F(ColumnTest, ConstructorAndSize) {
+    EXPECT_EQ(int_col.size(), 0);
+    EXPECT_EQ(int_col.type, Datatypes::INT);
+
+    std::vector<Types> initial_data = {1, 2, 3, 4, 5};
+    Column populated_col(initial_data, Datatypes::INT);
+    EXPECT_EQ(populated_col.size(), 5);
+    EXPECT_EQ(populated_col[2], Types(3));
+}
+
+TEST_F(ColumnTest, PushAndPop) {
+    int_col.push(10);
+    int_col.push(20);
+    EXPECT_EQ(int_col.size(), 2);
+    EXPECT_EQ(int_col[1], Types(20));
+}
+
+TEST_F(ColumnTest, UpdateAndErase) {
+    std::vector<Types> initial_data = {1, 2, 3, 4, 5};
+    Column col(initial_data, Datatypes::INT);
+
+    col.update(2, 99);
+    EXPECT_EQ(col[2], Types(99));
+
+    col.erase(1); // Erase '2'
+    EXPECT_EQ(col.size(), 4);
+    EXPECT_EQ(col[0], Types(1));
+    EXPECT_EQ(col[1], Types(99)); // Formerly index 2
+    EXPECT_EQ(col[2], Types(4));
+    EXPECT_EQ(col[3], Types(5));
+}
+
+TEST_F(ColumnTest, BulkOperations) {
+    std::vector<Types> initial_data = {10, 20, 30, 40, 50, 60};
+    Column col(initial_data, Datatypes::INT);
+
+    std::vector<int> update_indices = {1, 3, 5};
+    col.bulkUpdate(update_indices, 0);
+    EXPECT_EQ(col[0], Types(10));
+    EXPECT_EQ(col[1], Types(0));
+    EXPECT_EQ(col[2], Types(30));
+    EXPECT_EQ(col[3], Types(0));
+    EXPECT_EQ(col[4], Types(50));
+    EXPECT_EQ(col[5], Types(0));
+
+    std::vector<int> erase_indices = {0, 2, 4}; // Erase 10, 30, 50
+    col.bulkErase(erase_indices);
+    EXPECT_EQ(col.size(), 3);
+    EXPECT_EQ(col[0], Types(0));
+    EXPECT_EQ(col[1], Types(0));
+    EXPECT_EQ(col[2], Types(0));
+}
+
+//##############################################################################
+// CONDITIONAL LOGIC TESTS
+//##############################################################################
+
+TEST_F(ColumnTest, IndicesMeetingCondition) {
+    std::vector<Types> data = {5, 10, 15, 10, 20, 5};
+    Column col(data, Datatypes::INT);
+
+    auto greater_than_10 = col.indicesMeetingCondition(Types(10), std::greater<Types>());
+    std::vector<int> expected_gt = {2, 4};
+    EXPECT_EQ(greater_than_10, expected_gt);
+
+    auto equal_to_10 = col.indicesMeetingCondition(Types(10), std::equal_to<Types>());
+    std::vector<int> expected_eq = {1, 3};
+    EXPECT_EQ(equal_to_10, expected_eq);
+
+    auto not_equal_to_5 = col.indicesMeetingCondition(Types(5), std::not_equal_to<Types>());
+    std::vector<int> expected_neq = {1, 2, 3, 4};
+    EXPECT_EQ(not_equal_to_5, expected_neq);
+}
+
+
+//##############################################################################
+// NUMERIC FUNCTION TESTS
+//##############################################################################
+
+TEST_F(ColumnTest, Round) {
+    std::vector<Types> data = {1.234f, 5.678f, 9.0f, -3.14159f};
+    Column col(data, Datatypes::FLOAT);
+    auto indices = create_indices(col.size());
+
+    Column rounded_2 = col.round(indices, 2);
+    EXPECT_FLOAT_EQ(std::get<float>(rounded_2[0]), 1.23f);
+    EXPECT_FLOAT_EQ(std::get<float>(rounded_2[1]), 5.68f);
+    EXPECT_FLOAT_EQ(std::get<float>(rounded_2[2]), 9.00f);
+    EXPECT_FLOAT_EQ(std::get<float>(rounded_2[3]), -3.14f);
+
+    Column rounded_0 = col.round(indices, 0);
+    EXPECT_FLOAT_EQ(std::get<float>(rounded_0[0]), 1.0f);
+    EXPECT_FLOAT_EQ(std::get<float>(rounded_0[1]), 6.0f);
+}
+
+TEST_F(ColumnTest, FloorAndCeiling) {
+    std::vector<Types> data = {1.1f, 1.9f, -1.1f, -1.9f, 5.0f};
+    Column col(data, Datatypes::FLOAT);
+    auto indices = create_indices(col.size());
+
+    Column floored = col.floor(indices);
+    EXPECT_EQ(getNumeric<int>(floored[0]), 1);
+    EXPECT_EQ(getNumeric<int>(floored[1]), 1);
+    EXPECT_EQ(getNumeric<int>(floored[2]), -2);
+    EXPECT_EQ(getNumeric<int>(floored[3]), -2);
+    EXPECT_EQ(getNumeric<int>(floored[4]), 5);
+
+    Column ceiled = col.ceiling(indices);
+    EXPECT_EQ(getNumeric<int>(ceiled[0]), 2);
+    EXPECT_EQ(getNumeric<int>(ceiled[1]), 2);
+    EXPECT_EQ(getNumeric<int>(ceiled[2]), -1);
+    EXPECT_EQ(getNumeric<int>(ceiled[3]), -1);
+    EXPECT_EQ(getNumeric<int>(ceiled[4]), 5);
+}
+
+TEST_F(ColumnTest, Absolute) {
+    std::vector<Types> data = {(float)10, (float)-20, (float)0, 3.14f, -9.9f};
+    Column col(data, Datatypes::FLOAT);
+    auto indices = create_indices(col.size());
+
+    Column abs_col = col.absolute(indices);
+    EXPECT_EQ(abs_col[0], Types(10));
+    EXPECT_EQ(abs_col[1], Types(20));
+    EXPECT_EQ(abs_col[2], Types(0));
+    EXPECT_EQ(abs_col[3], Types(3.14f));
+    EXPECT_EQ(abs_col[4], Types(9.9f));
+}
+
+//##############################################################################
+// STRING FUNCTION TESTS
+//##############################################################################
+
+TEST_F(ColumnTest, Length) {
+    std::vector<Types> data = {std::string("hello"), std::string(""), std::string("world!")};
+    Column col(data, Datatypes::TEXT);
+    auto indices = create_indices(col.size());
+
+    Column len_col = col.length(indices);
+    EXPECT_EQ(std::get<int>(len_col[0]), 5);
+    EXPECT_EQ(std::get<int>(len_col[1]), 0);
+    EXPECT_EQ(std::get<int>(len_col[2]), 6);
+}
+
+TEST_F(ColumnTest, Concat) {
+    std::vector<Types> data = {std::string("first"), std::string("second")};
+    Column col(data, Datatypes::TEXT);
+    auto indices = create_indices(col.size());
+
+    Column concat_col = col.concat(indices, "-place");
+    EXPECT_EQ(std::get<std::string>(concat_col[0]), "first-place");
+    EXPECT_EQ(std::get<std::string>(concat_col[1]), "second-place");
+}
+
+TEST_F(ColumnTest, UpperLowerInitCap) {
+    std::vector<Types> data = {std::string("HelLo WorLd"), std::string("all lower"), std::string("ALL UPPER")};
+    Column col(data, Datatypes::TEXT);
+    auto indices = create_indices(col.size());
+
+    Column upper_col = col.upper(indices);
+    EXPECT_EQ(std::get<std::string>(upper_col[0]), "HELLO WORLD");
+    EXPECT_EQ(std::get<std::string>(upper_col[1]), "ALL LOWER");
+    EXPECT_EQ(std::get<std::string>(upper_col[2]), "ALL UPPER");
+
+    Column lower_col = col.lower(indices);
+    EXPECT_EQ(std::get<std::string>(lower_col[0]), "hello world");
+    EXPECT_EQ(std::get<std::string>(lower_col[1]), "all lower");
+    EXPECT_EQ(std::get<std::string>(lower_col[2]), "all upper");
+
+    // Assuming InitCap capitalizes the first letter of each word
+    Column initcap_col = col.initCap(indices);
+    EXPECT_EQ(std::get<std::string>(initcap_col[0]), "Hello World");
+    EXPECT_EQ(std::get<std::string>(initcap_col[1]), "All Lower");
+    EXPECT_EQ(std::get<std::string>(initcap_col[2]), "All Upper");
+}
+
+TEST_F(ColumnTest, Trim) {
+    std::vector<Types> data = {std::string("  hello  "), std::string("xxxyyyxxx"), std::string("  both sides  ")};
+    Column col(data, Datatypes::TEXT);
+    auto indices = create_indices(col.size());
+
+    Column trim_leading = col.trim(indices, TrimModes::LEADING);
+    EXPECT_EQ(std::get<std::string>(trim_leading[0]), "hello  ");
+    Column trim_trailing = col.trim(indices, TrimModes::TRAILING);
+    EXPECT_EQ(std::get<std::string>(trim_trailing[0]), "  hello");
+    Column trim_both = col.trim(indices, TrimModes::BOTH);
+    EXPECT_EQ(std::get<std::string>(trim_both[0]), "hello");
+
+    Column trim_custom = col.trim({1}, TrimModes::BOTH, 'x');
+    EXPECT_EQ(std::get<std::string>(trim_custom[0]), "yyy");
+}
+
+TEST_F(ColumnTest, Substring) {
+    std::vector<Types> data = {std::string("abcdefg")};
+    Column col(data, Datatypes::TEXT);
+    auto indices = create_indices(col.size());
+
+    // SQL substring is often 1-indexed
+    Column sub_col = col.substring(indices, 2, 3);
+    EXPECT_EQ(std::get<std::string>(sub_col[0]), "bcd");
+
+    Column sub_to_end = col.substring(indices, 4, 99); // Length past end
+    EXPECT_EQ(std::get<std::string>(sub_to_end[0]), "defg");
+    
+    Column sub_invalid_start = col.substring(indices, 0, 3); // Invalid start
+    EXPECT_EQ(std::get<std::string>(sub_invalid_start[0]), "abc"); // Common SQL behavior
+}
+
+//##############################################################################
+// AGGREGATE FUNCTION TESTS
+//##############################################################################
+
+TEST_F(ColumnTest, Sum) {
+    std::vector<Types> data = {10, 20, std::monostate{}, 30, -5};
+    Column col(data, Datatypes::INT);
+    auto indices = create_indices(col.size());
+
+    EXPECT_DOUBLE_EQ(col.sum(indices), 55.0);
+}
+
+TEST_F(ColumnTest, SumDistinct) {
+    std::vector<Types> data = {10, 20, 10, std::monostate{}, 30, 20};
+    Column col(data, Datatypes::INT);
+    auto indices = create_indices(col.size());
+
+    EXPECT_DOUBLE_EQ(col.sumDistinct(indices), 60.0); // 10 + 20 + 30
+}
+
+TEST_F(ColumnTest, Count) {
+    std::vector<Types> data = {1, std::monostate{}, 2, 4, std::monostate{}};
+    Column col(data, Datatypes::INT); // Type doesn't matter for count
+    auto indices = create_indices(col.size());
+
+    EXPECT_EQ(col.count(indices), 3); // Should ignore NULLs
+}
+
+TEST_F(ColumnTest, CountDistinct) {
+    std::vector<Types> data = {"A", "B", "A", std::monostate{}, "C", "B", "D"};
+    Column col(data, Datatypes::TEXT);
+    auto indices = create_indices(col.size());
+
+    EXPECT_EQ(col.countDistinct(indices), 4); // A, B, C, D
+}
+
+TEST_F(ColumnTest, Avg) {
+    std::vector<Types> data = {10, 15, 20, std::monostate{}, 25};
+    Column col(data, Datatypes::INT);
+    auto indices = create_indices(col.size());
+
+    EXPECT_DOUBLE_EQ(col.avg(indices), 17.5); // (10+15+20+25) / 4
+}
+
+TEST_F(ColumnTest, AvgDistinct) {
+    std::vector<Types> data = {10, 20, 10, std::monostate{}, 30, 20};
+    Column col(data, Datatypes::INT);
+    auto indices = create_indices(col.size());
+
+    EXPECT_DOUBLE_EQ(col.avgDistinct(indices), 20.0); // (10 + 20 + 30) / 3
+}
+
+TEST_F(ColumnTest, MinMax) {
+    std::vector<Types> data_num = {100, -50, 200, std::monostate{}, 0, 99};
+    Column col_num(data_num, Datatypes::INT);
+    auto indices_num = create_indices(col_num.size());
+
+    EXPECT_DOUBLE_EQ(col_num.min(indices_num), -50.0);
+    EXPECT_DOUBLE_EQ(col_num.max(indices_num), 200.0);
+
+    // std::vector<Types> data_str = {"apple", "zebra", "banana", std::monostate{}, "grape"};
+    // Column col_str(data_str, Datatypes::TEXT);
+    // auto indices_str = create_indices(col_str.size());
+
+    // // Assuming min/max on strings is lexicographical
+    // EXPECT_EQ(std::get<std::string>(col_str.min(indices_str)), "apple");
+    // EXPECT_EQ(std::get<std::string>(col_str.max(indices_str)), "zebra");
+}
+
+TEST_F(ColumnTest, StringAggregate) {
+    std::vector<Types> data = {"A", "B", std::monostate{}, "C", "D"};
+    Column col(data, Datatypes::TEXT);
+    auto indices = create_indices(col.size());
+
+    EXPECT_EQ(col.stringAggregate(indices, ","), "A,B,C,D");
+    EXPECT_EQ(col.stringAggregate(indices, "->"), "A->B->C->D");
+}
+
+//##############################################################################
+// NULL-RELATED FUNCTION TESTS
+//##############################################################################
+
+TEST_F(ColumnTest, NullIf) {
+    std::vector<Types> data = {10, 20, 30, 40};
+    Column col(data, Datatypes::INT);
+    auto indices = create_indices(col.size());
+
+    Column nullif_col = col.nullIf(indices, 20);
+    EXPECT_EQ(nullif_col[0], Types(10));
+    EXPECT_TRUE(std::holds_alternative<std::monostate>(nullif_col[1]));
+    EXPECT_EQ(nullif_col[2], Types(30));
+    EXPECT_EQ(nullif_col[3], Types(40));
+}
+
+TEST_F(ColumnTest, Coalesce) {
+    std::vector<Types> data = {10, std::monostate{}, 30, std::monostate{}};
+    Column col(data, Datatypes::INT);
+    auto indices = create_indices(col.size());
+
+    Column coalesce_col = col.coalesce(indices, 99);
+    EXPECT_EQ(coalesce_col[0], Types(10));
+    EXPECT_EQ(coalesce_col[1], Types(99));
+    EXPECT_EQ(coalesce_col[2], Types(30));
+    EXPECT_EQ(coalesce_col[3], Types(99));
+}
+
+//##############################################################################
+// CONSTRAINT ENFORCEMENT TESTS
+//##############################################################################
+
+// TEST_F(ColumnTest, NotNullConstraint) {
+//     ColumnConstraints constraints;
+//     constraints.TakesNulls = false;
+//     Column col(Datatypes::INT, constraints);
+
+//     col.push(10); // OK
+//     EXPECT_THROW(col.push(std::monostate{}), std::runtime_error);
+
+//     std::vector<Types> bad_data = {1, 2, std::monostate{}};
+//     EXPECT_THROW(Column(bad_data, Datatypes::INT, constraints), std::runtime_error);
+// }
+
+// TEST_F(ColumnTest, UniqueConstraint) {
+//     ColumnConstraints constraints;
+//     constraints.Unique = true;
+//     Column col(Datatypes::INT, constraints);
+
+//     col.push(10);
+//     col.push(20); // OK
+//     EXPECT_THROW(col.push(10), std::runtime_error);
+
+//     col.update(0, 30); // OK
+//     EXPECT_THROW(col.update(0, 20), std::runtime_error);
+
+//     std::vector<Types> bad_data = {1, 2, 3, 2, 4};
+//     EXPECT_THROW(Column(bad_data, Datatypes::INT, constraints), std::runtime_error);
+// }
+
+// TEST_F(ColumnTest, CharLengthConstraint) {
+//     ColumnConstraints constraints;
+//     constraints.CharLength = 5;
+//     Column col(Datatypes::VARCHAR, constraints);
+
+//     col.push(Varchar("abcde")); // OK
+//     EXPECT_THROW(col.push(Varchar("abcdef")), std::runtime_error);
+
+//     col.update(0, std::string("12345")); // OK
+//     EXPECT_THROW(col.update(0, std::string("123456")), std::runtime_error);
+// }

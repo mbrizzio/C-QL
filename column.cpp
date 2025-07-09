@@ -124,22 +124,6 @@ void Column::bulkUpdate(vector<int> &indices, const Types newValue) {
   enforceWholeColumnConstraints();
 }
 
-template <typename Comparator>
-bool Column::meetsCondition(const int index, const Types &rhs, const Comparator &comp) const {
-  Types &lhs = col[index];
-
-  return comp(lhs, rhs);
-}
-
-template <typename Comparator>
-vector<int> Column::indicesMeetingCondition(const Types &rhs, const Comparator &comp) const {
-  vector<int> goodIndices;
-  for (int i : col.size()) {
-    if (meetsCondition(i, rhs, comp)) goodIndices.push_back(i);
-  }
-
-  return goodIndices;
-}
 
 
 ////// Temporary column creation functions
@@ -149,7 +133,7 @@ Column Column::round(const vector<int> &indices, int decimals) const {
   float mult = pow(10, decimals);
   
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
     }
     else if (isString(type) || isNumeric(type)){
@@ -170,12 +154,12 @@ Column Column::ceiling(const vector<int> &indices) const {
   Column converted(Datatypes::BIGINT); 
 
   for (int i: indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
     }
     else if (isNumeric(type) || isString(type)){
-      int64_t value = getNumeric<int64_t>(col[i]) + 1;
-      converted.push(value);
+      int64_t ceiled = (int64_t)std::ceil(getNumeric<float>(col[i]));
+      converted.push(ceiled);
     }
     else {
       converted.push(col[i]);
@@ -189,11 +173,13 @@ Column Column::floor(const vector<int> &indices) const {
   Column converted(Datatypes::BIGINT);
 
   for (int i : indices){
-    if (col[i] == Null) {
+    if (isNull(col[i])) {
       converted.push(Null);
     }
     else if (isNumeric(type) || isString(type)){
-      converted.push((getNumeric<int64_t>(col[i])));
+      int64_t floored = (int64_t)std::floor(getNumeric<float>(col[i]));
+      
+      converted.push(floored);
     }
     else{
       converted.push(col[i]);
@@ -210,14 +196,14 @@ Column Column::absolute(const vector<int> &indices) const {
     exit(9);
   }
 
-  Column converted(Datatypes::BIGINT);
+  Column converted(Datatypes::FLOAT);
 
   for (int i : indices){
-    if (col[i] == Null) {
+    if (isNull(col[i])) {
       converted.push(Null);
     }
     else{
-      converted.push(abs(getNumeric<int>(col[i])));
+      converted.push((float)abs(getNumeric<float>(col[i])));
     }
   }
 
@@ -234,7 +220,7 @@ Column Column::length(const vector<int> &indices) const {
   Column converted(Datatypes::INT);
 
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
     }
     else{
@@ -255,7 +241,7 @@ Column Column::concat(const vector<int> &indices, string toConcatenate) const {
   Column converted(Datatypes::TEXT);
 
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
     }
     else{
@@ -276,7 +262,7 @@ Column Column::upper(const vector<int> &indices) const {
   Column converted(Datatypes::TEXT);
 
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
     }
     else{
@@ -301,7 +287,7 @@ Column Column::lower(const vector<int> &indices) const {
   Column converted(Datatypes::TEXT);
 
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
     }
     else{
@@ -326,9 +312,10 @@ Column Column::initCap(const vector<int> &indices) const {
   Column converted(Datatypes::TEXT);
 
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
     }
+
     else{
       string text = getString(col[i]);
 
@@ -336,11 +323,30 @@ Column Column::initCap(const vector<int> &indices) const {
         converted.push(text);
         continue;
       }
-      
-      // Is not smart; checks the literal first characterof the string
-      char &c = text[0];
-      for (char &c : text) {c = 'a' <= c && c <= 'z' ? c + ('A' - 'z') : c;}
 
+      bool pastWasDelimiter = true;
+      auto isDelimiter = [] (char c) -> bool {
+        return (!('A' <= c && c <= 'Z') &&
+                !('a' <= c && c <= 'z') &&
+                !('0' <= c && c <= '9'));
+      };
+
+      for (char &c : text) {
+        if (isDelimiter(c)){
+          pastWasDelimiter = true;
+          continue;
+        }
+        
+        if ('0' <= c && c <= '9'){
+          pastWasDelimiter = false;
+          continue;
+        }
+
+        c = pastWasDelimiter ? static_cast<char>(std::toupper(c)) :
+                               static_cast<char>(std::tolower(c));
+        pastWasDelimiter = false;
+      }
+      
       converted.push(text);
     }
   }
@@ -359,13 +365,15 @@ Column Column::substring(const vector<int> &indices, int startPos, int length) c
   --startPos;
 
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
     }
     else{
       string text = getString(col[i]);
+      
+      if (startPos < 0) startPos = 0;
 
-      if (text.size() < startPos){
+      if (static_cast<int>(text.size()) < startPos){
         converted.push("");
         continue;
       }
@@ -388,7 +396,7 @@ Column Column::trim(const vector<int> &indices,
   Column converted(Datatypes::TEXT);
 
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
       continue;
     }
@@ -412,7 +420,7 @@ Column Column::trim(const vector<int> &indices,
           ++cut;
         }
 
-        converted.push(string(text.rend(), cut));
+        converted.push(string(text.begin(), cut.base()));
         break;
       }
 
@@ -429,7 +437,7 @@ Column Column::trim(const vector<int> &indices,
           ++ecut;
         }
 
-        converted.push(string(ecut, text.rbegin()));
+        converted.push(string(text.begin(), ecut.base()));
         break;
       }
     } // Switch statement
@@ -449,7 +457,7 @@ Column Column::replace(const vector<int> &indices,
   Column converted(Datatypes::TEXT);  
 
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
       continue;
     }
@@ -480,7 +488,7 @@ Column Column::left(const vector<int> &indices, int cutoff) const {
   Column converted(Datatypes::TEXT);
 
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
     }
     else{
@@ -507,7 +515,7 @@ Column Column::right(const vector<int> &indices, int start) const {
   Column converted(Datatypes::TEXT);
 
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
     }
     else{
@@ -518,7 +526,7 @@ Column Column::right(const vector<int> &indices, int start) const {
         continue;
       }
 
-      converted.push(string(text.rend(), text.rbegin() + start));
+      converted.push(string(text.begin(), (text.rbegin() + start).base()));
     }
   }
 
@@ -538,7 +546,7 @@ Column::extract(const vector<int> &indices, const Component &mode) const {
   Column converted(Datatypes::FLOAT);
 
   for (int i : indices){
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(Null);
     }
     else{
@@ -579,10 +587,10 @@ Column Column::nullIf(const vector<int> &indices, const Types &rhs) const {
 
 Column Column::coalesce(const vector<int> &indices, const Types &rhs) const {
   Column converted(type, {unique, false, isPrimaryKey, isForeignKey, 
-                          defaultValue, timePrecision, charLength});  
+                          validNonNullDefaultValue(type), timePrecision, charLength});  
 
   for (int i : indices) {
-    if (col[i] == Null){
+    if (isNull(col[i])){
       converted.push(rhs);
     }
     else{
@@ -596,10 +604,9 @@ Column Column::coalesce(const vector<int> &indices, const Types &rhs) const {
 double Column::sum(const vector<int> &indices) const {
   double total = 0;
   
-  for (int i : indices){
-    if (col[i] == Null) continue;
+  for (int i : indices){ //ugly af, shoudl be abstracted into a function
+    if (isNull(col[i])) continue;
     
-
     total += getNumeric<double>(col[i]);
   }
 
@@ -611,7 +618,7 @@ double Column::sumDistinct(const vector<int> &indices) const {
   set<double> seenNumbers; // This is a sum, so we can safely assume that we have a number
 
   for (int i : indices) {
-    if (col[i] == Null) continue;
+    if (isNull(col[i])) continue;
 
     double value = getNumeric<double>(col[i]);
 
@@ -627,7 +634,7 @@ double Column::sumDistinct(const vector<int> &indices) const {
 int Column::count(const vector<int> &indices) const {
   int total = 0;
   for (int i : indices) {
-    if (col[i] == Null) continue;
+    if (isNull(col[i])) continue;
 
     ++total;
   }
@@ -639,7 +646,7 @@ int Column::countDistinct(const vector<int> &indices) const {
   int total = 0;
   set<Types> seenValues;
   for (int i : indices){
-    if (col[i] == Null || seenValues.contains(col[i])) continue;
+    if (isNull(col[i]) || seenValues.contains(col[i])) continue;
 
     seenValues.insert(col[i]);
     ++total;
@@ -662,7 +669,7 @@ double Column::max(const vector<int> &indices) const {
   double max = std::numeric_limits<double>::lowest();
 
   for (int i : indices){
-    if (col[i] == Null) continue;
+    if (isNull(col[i])) continue;
 
     max = std::max(max, (getNumeric<double>(col[i])));
   }
@@ -671,10 +678,10 @@ double Column::max(const vector<int> &indices) const {
 }
 
 double Column::min(const vector<int> &indices) const {
-  double min = std::numeric_limits<double>::lowest();
+  double min = std::numeric_limits<double>::max();
 
   for (int i : indices){
-    if (col[i] == Null) continue;
+    if (isNull(col[i])) continue;
 
     min = std::min(min, (getNumeric<double>(col[i])));
   }
@@ -686,6 +693,7 @@ string Column::stringAggregate(const vector<int> &indices, string separator) con
   string result = "";
 
   for (int i : indices){
+    if (isNull(col[i])) continue;
     ostringstream stringHolder;
     stringHolder << col[i];
 
@@ -693,6 +701,7 @@ string Column::stringAggregate(const vector<int> &indices, string separator) con
     result += separator;
   }
 
+  result.resize(result.size() - separator.size());
   return result;
 }
 
@@ -722,14 +731,14 @@ void Column::enforceCellContraint(const Types &cell, const bool comesFromBulk) c
   }
   
   // Uniqueness (when coming in after the column has been created)
-  if (!comesFromBulk && cell != Null && find(col.begin(), col.end(), cell) != col.end()){
+  if (unique && !comesFromBulk && cell != Null && find(col.begin(), col.end(), cell) != col.end()){
     cerr << "Uniqueness constraint not met" << endl;
     exit(5);
   }
 
   // Takes nulls 
-  if (cell == Null && !takesNulls){
-    cerr << "(Not) Takes Nulls constraint not met" << endl;
+  if (isNull(cell) && !takesNulls){
+    cerr << "(Does not take) Nulls constraint not met" << endl;
     exit(5);
   }
 
@@ -745,12 +754,12 @@ void Column::enforceCellContraint(const Types &cell, const bool comesFromBulk) c
   }
 
   // CharLength Precision
-  if (holds_alternative<Varchar>(cell) && timePrecision != -1 && get<Varchar>(cell).length != timePrecision) {
+  if (holds_alternative<Varchar>(cell) && charLength != -1 && get<Varchar>(cell).length != charLength) {
     cerr << "Char length constraint not met" << endl;
     exit(5);
   }
 
-  if (holds_alternative<SQLChar>(cell) && timePrecision != -1 && get<SQLChar>(cell).length != timePrecision) {
+  if (holds_alternative<SQLChar>(cell) && charLength != -1 && get<SQLChar>(cell).length != charLength) {
     cerr << "Char length constraint not met" << endl;
     exit(5);
   }
@@ -763,6 +772,8 @@ void Column::enforceWholeColumnConstraints() const {
 
   // Uniqueness must be enforced here. Since we supoprt instantiating this object
   // with a vector, we must check this independently
+  if (!unique) return;
+
   set<Types> uniqueCol(col.begin(), col.end());
   if (uniqueCol.size() != col.size()) {
     cerr << "Uniqueness constraint not met" << endl;
@@ -770,7 +781,43 @@ void Column::enforceWholeColumnConstraints() const {
   }
 }
 
-
+Types validNonNullDefaultValue(Datatypes type) {
+  switch (type) {
+    case (Datatypes::BIGINT): {
+      return static_cast<int64_t>(0);
+    } 
+    case (Datatypes::BOOL): {
+      return false;
+    }
+    case (Datatypes::CHAR): {
+      return SQLChar();
+    }
+    case (Datatypes::DATE): {
+      return Date("2000-01-01");
+    }
+    case (Datatypes::DATETIME): {
+      return Datetime();
+    }
+    case (Datatypes::FLOAT): {
+      return static_cast<float>(0);
+    }
+    case (Datatypes::INT): {
+      return static_cast<int>(0);
+    }
+    case (Datatypes::SMALLINT): {
+      return static_cast<int16_t>(0);
+    }
+    case (Datatypes::TEXT): {
+      return "";
+    }
+    case (Datatypes::TIME): {
+      return Time();
+    }
+    case (Datatypes::VARCHAR): {
+      return Varchar();
+    }
+  }
+}
 
 ///////////////////////////// Column end ////////////////////////////////
 

@@ -447,6 +447,8 @@ Datatypes getType(const Types &value);
 
 ostream& operator<<(ostream& os, const Types& self);
 
+bool isNull(const Types &value);
+
 using Row = unordered_map<string, Types>;
 using ColumnOld = vector<Types>;
 

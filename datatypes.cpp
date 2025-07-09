@@ -36,6 +36,9 @@ Datatypes getType(const Types &value) {
   }, value);
 }
 
+bool isNull (const Types &value){
+  return std::holds_alternative<std::monostate>(value);
+}
 /////////////////////// Types helper functions end ////////////////////////
 
 
