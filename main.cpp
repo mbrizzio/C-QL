@@ -1,5 +1,6 @@
 #include "datatypes.h"
 #include "column.h"
+#include "table.h"
 #include "testsuite.h"
 
 using namespace std;
@@ -47,6 +48,6 @@ int main(int argc, char** argv) {
   // timeTestCases();
 
   //datetimeUnitTests();
-  ::testing::InitGoogleTest(&argc, argv);
-  RUN_ALL_TESTS();
+  // ::testing::InitGoogleTest(&argc, argv);
+  // RUN_ALL_TESTS();
 }
