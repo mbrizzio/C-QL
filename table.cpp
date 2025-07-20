@@ -15,6 +15,7 @@ const int Alias::ORIGINAL_NAME_LOCATION = 0;
 
 Alias::Alias(const string &name) : names(vector<string>(0)) {
   names.push_back(name);
+  currentAlias = names.size() - 1;
 }
 
 string Alias::getOriginalName() const {
@@ -42,8 +43,8 @@ void Aliases::push(const string &trueName, const string &newName) {
 
 string Aliases::operator[] (const string &name) const {
   for (Alias a : names){
-    if (find(a.names.begin(), a.names.end(), name) != a.names.end()) {
-      return a.names[Alias::ORIGINAL_NAME_LOCATION];
+    if (a.containsName(name)) {
+      return a.getOriginalName();
     }
   }
 
@@ -51,3 +52,53 @@ string Aliases::operator[] (const string &name) const {
   exit(6);
 }
 ///////////////////// end helper classes function /////////////////////////////////////
+
+
+
+//////////////////////////// Table //////////////////////////////////////
+
+////// Table creation and modification functions
+
+Table::Table () {};
+
+void Table::addColumn(const Column formedColumn, const string &name) {
+  aliases.push(Alias(name));
+
+  table[name] = formedColumn;
+}
+
+void Table::addColumn(const string &name, Datatypes type, string &unprocessedValues) {
+  Column formedColumn = commaSeparatedToColumn(type, unprocessedValues);
+
+  addColumn(formedColumn, name);
+}
+
+void Table::deleteColumn(const string &name) {
+  table.erase(name);
+}
+
+void Table::renameColumn(const string &oldName, const string &newName) {
+  table[newName];
+  swap(table[oldName], table[newName]);
+  table.erase(oldName);
+}
+
+Column Table::commaSeparatedToColumn(const Datatypes type, string &values) {
+  Column col(type);
+
+  auto begin = values.begin(), end = std::find(values.begin(), values.end(), ',');
+
+  // Want everything to be self-contained in the loop. We know it is done when 
+  // there are no more , to find, so begin will be the same as end.
+  while (true) {
+    Types value = convertToVariant(string(begin, end), type);
+
+    col.push(value);
+
+    begin = end;
+    if (begin == values.end()) break;
+    end = std::find(begin + 1, values.end(), ',');
+  }
+
+  return col;
+}
