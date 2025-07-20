@@ -35,8 +35,8 @@ class Varchar{
     Varchar(int Length);
     Varchar(int Length, string Value);
 
-    Varchar(Table* table, std::string name);
-    Varchar(Table* table, std::string name, string Value);
+    // Varchar(Table* table, std::string name);
+    // Varchar(Table* table, std::string name, string Value);
 
     string getValue() const;
     int getLength() const;
@@ -90,8 +90,8 @@ class SQLChar : public Varchar {
     SQLChar(int Length);
     SQLChar(int Length, string Value);
 
-    SQLChar(Table* table, std::string name);
-    SQLChar(Table* table, string name, string Value);
+    // SQLChar(Table* table, std::string name);
+    // SQLChar(Table* table, string name, string Value);
 
     // resolve ambiguity by  overloading the parent comparators
     bool operator==(const SQLChar &rhs) const;
@@ -421,6 +421,49 @@ getNumeric(const Types &value) {
   }, value);
 }
 
+// Return to this function later if getting errors
+template<typename T>
+Types convertToVariant(T value, Datatypes type) {
+    switch (type) {
+        case Datatypes::BOOL:
+            return Types(static_cast<bool>(value));
+        case Datatypes::INT:
+            return Types(static_cast<int>(value));
+        case Datatypes::SMALLINT:
+            return Types(static_cast<int16_t>(value));
+        case Datatypes::BIGINT:
+            return Types(static_cast<int64_t>(value));
+        case Datatypes::FLOAT:
+            return Types(static_cast<float>(value));
+        
+        // Note: static_cast to std::string is only valid from certain types
+        // like const char*. This will fail to compile for numeric types.
+        case Datatypes::TEXT:
+            return Types(static_cast<string>(value));
+
+        // The following casts assume T is convertible to the target struct.
+        // This would typically require a user-defined conversion operator
+        // or a converting constructor in the respective structs.
+        case Datatypes::VARCHAR:
+            return Types(static_cast<Varchar>(value));
+        case Datatypes::CHAR:
+            return Types(static_cast<SQLChar>(value));
+        case Datatypes::DATE:
+            return Types(static_cast<Date>(value));
+        case Datatypes::TIME:
+            return Types(static_cast<Time>(value));
+        case Datatypes::DATETIME:
+            return Types(static_cast<Datetime>(value));
+
+        case Datatypes::NULLVALUE:
+            return Types(monostate{}); // Return a null-like state
+
+        default:
+            // It's good practice to handle unexpected enum values.
+            throw std::invalid_argument("Unhandled datatype in convertToVariant");
+    }
+}
+
 // template <typename T>
 // enable_if_t<is_same_v<decay_t<T>, Date> || is_same_v<decay_t<T>, Time>
 //             || is_same_v<decay_t<T>, Datetime>, T>
@@ -448,9 +491,6 @@ Datatypes getType(const Types &value);
 ostream& operator<<(ostream& os, const Types& self);
 
 bool isNull(const Types &value);
-
-using Row = unordered_map<string, Types>;
-using ColumnOld = vector<Types>;
 
 
 /////////////// Comparator hell part 2 ////////////////////////////

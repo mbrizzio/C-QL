@@ -65,18 +65,18 @@ Varchar::Varchar(int Length, string Value) : length(Length),
     enforceLengthInvariant();
   };
 
-Varchar::Varchar(Table* table, std::string name) {
-  length = table->getCharTypeLength(name);
-  value = ""; 
+// Varchar::Varchar(Table* table, std::string name) {
+//   length = table->getCharTypeLength(name);
+//   value = ""; 
 
-  enforceLengthInvariant();
-}
+//   enforceLengthInvariant();
+// }
 
-Varchar::Varchar(Table* table, string name, string Value) : value(Value) {
-  length = table->getCharTypeLength(name);
+// Varchar::Varchar(Table* table, string name, string Value) : value(Value) {
+//   length = table->getCharTypeLength(name);
 
-  enforceLengthInvariant();
-}
+//   enforceLengthInvariant();
+// }
 
 void Varchar::enforceLengthInvariant(){
   if (value.size() > length){
@@ -111,14 +111,14 @@ SQLChar::SQLChar(int Length, string Value) : Varchar(Length, Value) {
   enforceLengthInvariant();
 }
 
-SQLChar::SQLChar(Table* table, std::string name) : Varchar(table, name){
-  enforceLengthInvariant();
-}
+// SQLChar::SQLChar(Table* table, std::string name) : Varchar(table, name){
+//   enforceLengthInvariant();
+// }
 
-SQLChar::SQLChar(Table* table, string name, string Value) : 
-Varchar(table, name, Value) {
-  enforceLengthInvariant();
-}
+// SQLChar::SQLChar(Table* table, string name, string Value) : 
+// Varchar(table, name, Value) {
+//   enforceLengthInvariant();
+// }
 
 void SQLChar::enforceLengthInvariant(){
   if (value.size() > length){
